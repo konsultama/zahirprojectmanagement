@@ -51,6 +51,7 @@ export class UpdateWbsDto {
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) weightPct?: number;
   @IsOptional() @IsString() picId?: string;
   @IsOptional() @IsString() vendorId?: string;
+  @IsOptional() @IsString() predecessorId?: string;
   @IsOptional() @IsBoolean() isQcRequired?: boolean;
   @IsOptional() @IsString() @MaxLength(500) notes?: string;
   @IsOptional() @IsString() reason?: string; // required when Planning already approved (BR-3)

@@ -5,7 +5,8 @@ import { useToast } from '../../components/Toast';
 import { useSession } from '../../session';
 import { formatRupiah } from '../../lib/format';
 import { STAGE_STATUS_META } from '../projects/statusConfig';
-import { WbsRow } from './WbsRow';
+import { useContacts, useUsersSearch } from '../projects/api';
+import { WbsRow, type RowOption } from './WbsRow';
 import {
   useApprovePlanning,
   useCreateWbs,
@@ -30,6 +31,11 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
   const submit = useSubmitPlanning(projectId);
   const approve = useApprovePlanning(projectId);
   const reject = useRejectPlanning(projectId);
+
+  const users = useUsersSearch('');
+  const vendors = useContacts('VENDOR', '');
+  const picOptions: RowOption[] = (users.data ?? []).map((u) => ({ id: u.id, label: u.name }));
+  const vendorOptions: RowOption[] = (vendors.data ?? []).map((v) => ({ id: v.id, label: v.name }));
 
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [showOver, setShowOver] = useState(false);
@@ -67,6 +73,16 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
     }
   };
   walk(tree, 0);
+
+  // predecessor options: every node (regardless of collapse), labelled by WBS number + name
+  const predecessorOptions: RowOption[] = [];
+  const collectAll = (nodes: WbsNode[]) => {
+    for (const n of nodes) {
+      predecessorOptions.push({ id: n.id, label: `${n.wbsNumber} ${n.name}` });
+      collectAll(n.children);
+    }
+  };
+  collectAll(tree);
 
   const toggle = (id: string) =>
     setCollapsed((s) => {
@@ -186,13 +202,16 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
               <th className="num">Qty</th>
               <th className="num">Nilai Anggaran</th>
               <th className="num">Total</th>
+              <th>PIC</th>
+              <th>Vendor</th>
+              <th>Predecessor</th>
               <th style={{ width: 70 }} />
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="muted center">
+                <td colSpan={11} className="muted center">
                   Belum ada kegiatan. {editable && 'Klik "Tambah Kegiatan".'}
                 </td>
               </tr>
@@ -205,6 +224,9 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
                 hasChildren={hasChildren}
                 collapsed={collapsed.has(node.id)}
                 editable={editable}
+                picOptions={picOptions}
+                vendorOptions={vendorOptions}
+                predecessorOptions={predecessorOptions}
                 onToggle={() => toggle(node.id)}
                 onUpdate={(patch) => update(node.id, patch)}
                 onAddChild={() => addChild(node.id)}

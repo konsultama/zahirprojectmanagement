@@ -978,6 +978,11 @@ textarea {
 .wbs-actions {
   white-space: nowrap;
 }
+.rel-select {
+  min-width: 96px;
+  max-width: 140px;
+  font-size: 0.82rem;
+}
 .row-icon {
   background: none;
   border: none;

@@ -20,7 +20,11 @@ export interface WbsNode {
   endDate: string | null;
   isQcRequired: boolean;
   picId: string | null;
+  picName: string | null;
   vendorId: string | null;
+  vendorName: string | null;
+  predecessorId: string | null;
+  predecessorNumber: string | null;
   notes: string | null;
   children: WbsNode[];
 }
@@ -64,6 +68,9 @@ export interface UpdateWbsPayload {
   endDate?: string;
   isQcRequired?: boolean;
   notes?: string;
+  picId?: string;
+  vendorId?: string;
+  predecessorId?: string;
   reason?: string;
 }
 

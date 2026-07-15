@@ -38,7 +38,11 @@ export interface WbsNode {
   endDate: Date | null;
   isQcRequired: boolean;
   picId: string | null;
+  picName: string | null;
   vendorId: string | null;
+  vendorName: string | null;
+  predecessorId: string | null;
+  predecessorNumber: string | null;
   notes: string | null;
   children: WbsNode[];
 }
@@ -175,7 +179,12 @@ export class WbsService {
     const project = await this.getProject(projectId);
     const items = await this.prisma.wbsItem.findMany({
       where: { projectId, deletedAt: null },
-      include: { location: { select: { name: true } } },
+      include: {
+        location: { select: { name: true } },
+        pic: { select: { name: true } },
+        vendor: { select: { name: true } },
+        predecessor: { select: { wbsNumber: true } },
+      },
       orderBy: [{ level: 'asc' }, { sortOrder: 'asc' }],
     });
 
@@ -199,7 +208,11 @@ export class WbsService {
         endDate: it.endDate,
         isQcRequired: it.isQcRequired,
         picId: it.picId,
+        picName: it.pic?.name ?? null,
         vendorId: it.vendorId,
+        vendorName: it.vendor?.name ?? null,
+        predecessorId: it.predecessorId,
+        predecessorNumber: it.predecessor?.wbsNumber ?? null,
         notes: it.notes,
         children: [],
       });
@@ -318,6 +331,11 @@ export class WbsService {
     if (childCount > 0 && (dto.qty != null || dto.unitBudget != null)) {
       throw new BadRequestException('Baris induk (punya sub-baris) tidak bisa diisi Qty/Nilai Anggaran langsung.');
     }
+    if (dto.predecessorId && dto.predecessorId === id) {
+      throw new BadRequestException('Predecessor tidak boleh baris itu sendiri.');
+    }
+    // relation fields: '' clears (null), undefined leaves unchanged
+    const rel = (v: string | undefined) => (v === undefined ? undefined : v === '' ? null : v);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.wbsItem.update({
@@ -325,15 +343,16 @@ export class WbsService {
         data: {
           name: dto.name ?? undefined,
           itemType: childCount === 0 && dto.itemType ? dto.itemType : undefined,
-          locationId: dto.locationId ?? undefined,
+          locationId: dto.locationId || undefined,
           uom: dto.uom ?? undefined,
           qty: childCount === 0 ? dto.qty ?? undefined : undefined,
           unitBudget: childCount === 0 ? dto.unitBudget ?? undefined : undefined,
           startDate: dto.startDate ? new Date(dto.startDate) : undefined,
           endDate: dto.endDate ? new Date(dto.endDate) : undefined,
           weightPct: dto.weightPct ?? undefined,
-          picId: dto.picId ?? undefined,
-          vendorId: dto.vendorId ?? undefined,
+          picId: rel(dto.picId),
+          vendorId: rel(dto.vendorId),
+          predecessorId: rel(dto.predecessorId),
           isQcRequired: dto.isQcRequired ?? undefined,
           notes: dto.notes ?? undefined,
         },

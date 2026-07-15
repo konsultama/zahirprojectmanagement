@@ -6,12 +6,20 @@ import type { UpdateWbsPayload, WbsNode } from './types';
 const UOM_TASK = ['hari', 'jam', 'ls', 'titik'];
 const UOM_MATERIAL = ['pcs', 'kg', 'm', 'm²', 'm³', 'unit', 'dus'];
 
+export interface RowOption {
+  id: string;
+  label: string;
+}
+
 interface Props {
   node: WbsNode;
   depth: number;
   collapsed: boolean;
   hasChildren: boolean;
   editable: boolean;
+  picOptions: RowOption[];
+  vendorOptions: RowOption[];
+  predecessorOptions: RowOption[];
   onToggle: () => void;
   onUpdate: (patch: UpdateWbsPayload) => void;
   onAddChild: () => void;
@@ -25,6 +33,9 @@ export function WbsRow({
   collapsed,
   hasChildren,
   editable,
+  picOptions,
+  vendorOptions,
+  predecessorOptions,
   onToggle,
   onUpdate,
   onAddChild,
@@ -143,6 +154,47 @@ export function WbsRow({
       </td>
       <td className="num total" title="Terhitung = Qty × Nilai Anggaran">
         {formatRupiah(node.totalBudget)}
+      </td>
+      <td>
+        <select
+          className="rel-select"
+          value={node.picId ?? ''}
+          disabled={!editable}
+          onChange={(e) => commit({ picId: e.target.value })}
+        >
+          <option value="">—</option>
+          {picOptions.map((o) => (
+            <option key={o.id} value={o.id}>{o.label}</option>
+          ))}
+        </select>
+      </td>
+      <td>
+        <select
+          className="rel-select"
+          value={node.vendorId ?? ''}
+          disabled={!editable}
+          onChange={(e) => commit({ vendorId: e.target.value })}
+        >
+          <option value="">—</option>
+          {vendorOptions.map((o) => (
+            <option key={o.id} value={o.id}>{o.label}</option>
+          ))}
+        </select>
+      </td>
+      <td>
+        <select
+          className="rel-select"
+          value={node.predecessorId ?? ''}
+          disabled={!editable}
+          onChange={(e) => commit({ predecessorId: e.target.value })}
+        >
+          <option value="">—</option>
+          {predecessorOptions
+            .filter((o) => o.id !== node.id)
+            .map((o) => (
+              <option key={o.id} value={o.id}>{o.label}</option>
+            ))}
+        </select>
       </td>
       <td className="wbs-actions">
         {editable && (
