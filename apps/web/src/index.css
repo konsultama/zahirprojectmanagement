@@ -825,6 +825,16 @@ textarea {
   gap: 0.6rem;
   flex-wrap: wrap;
 }
+.string-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.string-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 .init-actions .btn-primary,
 .init-actions .btn-danger {
   display: inline-flex;

@@ -13,7 +13,7 @@ import {
   useSubmitInitiating,
   useToggleChecklist,
 } from './api';
-import type { Deliverable, Stakeholder } from './types';
+import type { Deliverable, InitialRisk, Stakeholder } from './types';
 import { STAGE_STATUS_META } from '../projects/statusConfig';
 
 export function InitiatingPanel({ projectId }: { projectId: string }) {
@@ -36,6 +36,9 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
   const [sponsorLabel, setSponsorLabel] = useState('');
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  const [assumptions, setAssumptions] = useState<string[]>([]);
+  const [constraints, setConstraints] = useState<string[]>([]);
+  const [initialRisks, setInitialRisks] = useState<InitialRisk[]>([]);
   const [sponsorQuery, setSponsorQuery] = useState('');
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -54,6 +57,9 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
     setSponsorLabel(f.sponsorApproverName ?? '');
     setDeliverables(f.deliverables.length ? f.deliverables : []);
     setStakeholders(f.stakeholders.length ? f.stakeholders : []);
+    setAssumptions(f.assumptions ?? []);
+    setConstraints(f.constraints ?? []);
+    setInitialRisks(f.initialRisks ?? []);
   }, [data]);
 
   if (isLoading || !data) return <div className="muted">Memuat…</div>;
@@ -74,6 +80,9 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
         sponsorApproverId: sponsorId || undefined,
         deliverables: deliverables.filter((d) => d.name.trim()),
         stakeholders: stakeholders.filter((s) => s.name.trim()),
+        assumptions: assumptions.map((a) => a.trim()).filter(Boolean),
+        constraints: constraints.map((c) => c.trim()).filter(Boolean),
+        initialRisks: initialRisks.filter((r) => r.description.trim()),
       });
       toast.success('Form Inisiasi tersimpan');
     } catch (e) {
@@ -170,6 +179,7 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
             disabled={!canEdit}
             cols={[
               { key: 'name', label: 'Nama', placeholder: 'mis. Gudang siap operasi' },
+              { key: 'description', label: 'Deskripsi', placeholder: 'Rincian singkat' },
               { key: 'targetDate', label: 'Target', type: 'date' },
             ]}
             onChange={setDeliverables}
@@ -186,10 +196,35 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
             cols={[
               { key: 'name', label: 'Nama', placeholder: 'Nama stakeholder' },
               { key: 'role', label: 'Peran' },
+              { key: 'contact', label: 'Kontak', placeholder: 'email/telepon' },
               { key: 'influence', label: 'Pengaruh', type: 'influence' },
             ]}
             onChange={setStakeholders}
             makeEmpty={() => ({ name: '', influence: 'MEDIUM' as const })}
+          />
+        </div>
+
+        {/* Asumsi & Batasan */}
+        <div>
+          <StringList title="Asumsi" items={assumptions} disabled={!canEdit} onChange={setAssumptions} placeholder="mis. Cuaca mendukung" />
+        </div>
+        <div>
+          <StringList title="Batasan (Constraint)" items={constraints} disabled={!canEdit} onChange={setConstraints} placeholder="mis. Anggaran tetap" />
+        </div>
+
+        {/* Risiko Awal */}
+        <div className="span-2">
+          <MiniList
+            title="Risiko Awal"
+            rows={initialRisks}
+            disabled={!canEdit}
+            cols={[
+              { key: 'description', label: 'Deskripsi Risiko', placeholder: 'mis. Keterlambatan material' },
+              { key: 'impact', label: 'Dampak', placeholder: 'Tinggi/Sedang/Rendah' },
+              { key: 'likelihood', label: 'Kemungkinan', placeholder: 'Tinggi/Sedang/Rendah' },
+            ]}
+            onChange={setInitialRisks}
+            makeEmpty={() => ({ description: '' })}
           />
         </div>
       </div>
@@ -278,6 +313,53 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
           Yang belum lengkap: {missing.join(' · ')}
         </p>
       )}
+    </div>
+  );
+}
+
+// --- simple list of free-text items (assumptions / constraints) ---
+function StringList({
+  title,
+  items,
+  disabled,
+  placeholder,
+  onChange,
+}: {
+  title: string;
+  items: string[];
+  disabled?: boolean;
+  placeholder?: string;
+  onChange: (items: string[]) => void;
+}) {
+  return (
+    <div className="loc-editor">
+      <div className="loc-head">
+        <label className="field-label">{title}</label>
+        {!disabled && (
+          <button type="button" className="btn-ghost" onClick={() => onChange([...items, ''])}>
+            + Tambah
+          </button>
+        )}
+      </div>
+      {items.length === 0 && <p className="muted small">Belum ada. {!disabled && 'Klik "+ Tambah".'}</p>}
+      <div className="string-list">
+        {items.map((it, i) => (
+          <div key={i} className="string-list-row">
+            <input
+              value={it}
+              disabled={disabled}
+              placeholder={placeholder}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => onChange(items.map((x, idx) => (idx === i ? e.target.value : x)))}
+            />
+            {!disabled && (
+              <button type="button" className="btn-remove" onClick={() => onChange(items.filter((_, idx) => idx !== i))}>
+                ×
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
