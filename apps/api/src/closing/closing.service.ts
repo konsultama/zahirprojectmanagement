@@ -70,6 +70,35 @@ export class ClosingService {
     }
   }
 
+  /**
+   * Progress indicator for the Closing stage (shown in the header). Tracks
+   * verified required docs + lessons filled. Does NOT override the SUBMITTED /
+   * APPROVED workflow states.
+   */
+  private async refreshStage(projectId: string): Promise<void> {
+    const stage = await this.prisma.projectStage.findFirst({
+      where: { projectId, stageType: StageType.CLOSING },
+    });
+    if (!stage) return;
+    if (stage.status === StageStatus.SUBMITTED || stage.status === StageStatus.APPROVED) return;
+
+    const docs = await this.prisma.projectDocument.findMany({ where: { projectId } });
+    const requiredDocs = docs.filter((d) => d.isRequired);
+    const resolved = requiredDocs.filter(
+      (d) => d.status === DocumentStatus.TERVERIFIKASI || d.status === DocumentStatus.TIDAK_BERLAKU,
+    ).length;
+    const lessonsFilled = !!this.parseEval(stage.notes).lessonsLearned?.trim();
+
+    const denom = requiredDocs.length + 1; // +1 for lessons learned
+    const doneCount = resolved + (lessonsFilled ? 1 : 0);
+    const pct = Math.round((doneCount / denom) * 10000) / 100;
+    const status = doneCount === 0 ? StageStatus.NOT_STARTED : StageStatus.IN_PROGRESS;
+
+    if (stage.status !== status || Number(stage.completionPct) !== pct) {
+      await this.prisma.projectStage.update({ where: { id: stage.id }, data: { status, completionPct: pct } });
+    }
+  }
+
   // ---- read -------------------------------------------------------------
 
   async get(projectId: string) {
@@ -172,6 +201,7 @@ export class ClosingService {
       },
     });
     await this.audit.log({ entityType: 'ProjectDocument', entityId: id, action: AuditAction.UPDATE, projectId, actor, newValue: { status: dto.status }, reason: dto.waiverReason ?? null, ipAddress: ip });
+    await this.refreshStage(projectId);
     return this.get(projectId);
   }
 
@@ -182,6 +212,7 @@ export class ClosingService {
       data: { projectId, name: dto.name, isRequired: dto.isRequired ?? false, status: DocumentStatus.BELUM, sortOrder: (max._max.sortOrder ?? 0) + 1 },
     });
     await this.audit.log({ entityType: 'ProjectDocument', entityId: projectId, action: AuditAction.CREATE, projectId, actor, newValue: { name: dto.name }, ipAddress: ip });
+    await this.refreshStage(projectId);
     return this.get(projectId);
   }
 
@@ -190,6 +221,7 @@ export class ClosingService {
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan.');
     await this.prisma.projectDocument.delete({ where: { id } });
     await this.audit.log({ entityType: 'ProjectDocument', entityId: id, action: AuditAction.DELETE, projectId, actor, ipAddress: ip });
+    await this.refreshStage(projectId);
     return this.get(projectId);
   }
 
@@ -201,6 +233,7 @@ export class ClosingService {
     const merged: Evaluation = { ...current, ...dto };
     await this.prisma.projectStage.update({ where: { id: closing.id }, data: { notes: JSON.stringify(merged) } });
     await this.audit.log({ entityType: 'ProjectStage', entityId: closing.id, action: AuditAction.UPDATE, projectId, actor, newValue: { evaluation: true }, ipAddress: ip });
+    await this.refreshStage(projectId);
     return this.get(projectId);
   }
 
