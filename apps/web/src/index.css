@@ -1097,6 +1097,122 @@ textarea {
   white-space: nowrap;
 }
 
+/* ---- Monitoring ---- */
+.subtabs {
+  margin-bottom: 0.5rem;
+}
+.qc-legend {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+.qc-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.qc-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Risk register */
+.risk-form {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.risk-form > input:first-child {
+  flex: 1;
+  min-width: 200px;
+}
+.risk-form select {
+  width: auto;
+}
+.risk-num {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.risk-num select {
+  width: 56px;
+}
+.risk-score-preview {
+  font-weight: 700;
+  color: var(--ink);
+}
+.risk-badge {
+  display: inline-block;
+  min-width: 28px;
+  text-align: center;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+}
+
+/* Control dashboard */
+.scurve-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.evm-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.evm-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.dash-lists {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.dash-h {
+  font-size: 0.9rem;
+  margin: 0 0 0.6rem;
+}
+.dash-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+.dash-ul li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+}
+
+@media (max-width: 860px) {
+  .evm-grid,
+  .dash-lists,
+  .scurve-row,
+  .qc-editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---- Toast ---- */
 .toast-stack {
   position: fixed;
