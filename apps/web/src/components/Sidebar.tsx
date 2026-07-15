@@ -1,14 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Boxes,
-  Database,
-  BookOpen,
-  ShoppingCart,
-  Wallet,
-  ChartColumn,
-  Settings,
-} from 'lucide-react';
+import { LayoutDashboard, Boxes, Database, ChartColumn, Settings } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -22,9 +13,6 @@ const NAV: NavItem[] = [
   { label: 'Dasbor', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Proyek', to: '/projects', icon: Boxes },
   { label: 'Data Master', to: '/master', icon: Database },
-  { label: 'Buku Besar', icon: BookOpen, disabled: true },
-  { label: 'Penjualan', icon: ShoppingCart, disabled: true },
-  { label: 'Kas & Bank', icon: Wallet, disabled: true },
   { label: 'Laporan', icon: ChartColumn, disabled: true },
   { label: 'Pengaturan', to: '/settings', icon: Settings },
 ];
