@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: proj_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: proj
+      POSTGRES_PASSWORD: proj_dev_password
+      POSTGRES_DB: proj_db
+      TZ: Asia/Jakarta
+    ports:
+      - "5433:5432"
+    volumes:
+      - proj_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proj -d proj_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  proj_pgdata:

@@ -1,0 +1,659 @@
+// Aplikasi Project Management — data model
+// Mengikuti PRD §9. Semua uang dalam IDR (Decimal), progres/bobot dalam persen (Decimal).
+// Soft delete: kolom `deletedAt` (BR-4). Audit: model AuditLog (§10).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  ADMIN
+  PM
+  SUPERVISOR
+  QC
+  FINANCE
+  VIEWER
+}
+
+enum ContactType {
+  CLIENT
+  VENDOR
+  BOTH
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CLOSED
+  CANCELLED
+}
+
+enum StageType {
+  INITIATING
+  PLANNING
+  EXECUTING
+  MONITORING
+  CLOSING
+}
+
+enum StageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum InfluenceLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum WbsItemType {
+  GROUP
+  TASK
+  MATERIAL
+}
+
+enum ExecutionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+  BLOCKED
+  CANCELLED
+}
+
+enum QcStatus {
+  BELUM_DIPERIKSA
+  PASSED
+  FAILED
+  PERLU_PERBAIKAN
+  WAIVED
+}
+
+enum RemediationStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum DocumentStatus {
+  BELUM
+  ADA
+  TERVERIFIKASI
+  TIDAK_BERLAKU
+}
+
+enum RiskCategory {
+  BIAYA
+  JADWAL
+  MUTU
+  K3
+  EKSTERNAL
+  SDM
+}
+
+enum MitigationStrategy {
+  AVOID
+  MITIGATE
+  TRANSFER
+  ACCEPT
+}
+
+enum RiskStatus {
+  OPEN
+  MITIGATED
+  CLOSED
+  OCCURRED
+}
+
+enum ProjectMemberRole {
+  PIC_UTAMA
+  PIC_PENDAMPING
+  SUPERVISOR
+  QC
+  FINANCE
+  ANGGOTA
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+  APPROVE
+  REJECT
+  REOPEN
+}
+
+// ============================================================================
+// MASTER DATA (dibaca dari modul lain di produksi; di sini di-mirror untuk MVP)
+// ============================================================================
+
+/// Pengguna sistem — PIC, tim, approver (integrasi Master Data User, §11).
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String?
+  role         Role     @default(VIEWER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  // Relasi balik
+  projectsAsPic       Project[]         @relation("ProjectPic")
+  projectMemberships  ProjectMember[]
+  locationsAsPic      ProjectLocation[] @relation("LocationPic")
+  stagesAsPic         ProjectStage[]    @relation("StagePic")
+  stagesApproved      ProjectStage[]    @relation("StageApprover")
+  wbsItemsAsPic       WbsItem[]         @relation("WbsPic")
+  executionsAsPic     ExecutionRecord[] @relation("ExecPic")
+  executionsCompleted ExecutionRecord[] @relation("ExecCompletedBy")
+  qcInspections       QcRecord[]        @relation("QcInspector")
+  risksOwned          ProjectRisk[]     @relation("RiskOwner")
+  auditLogs           AuditLog[]
+
+  @@index([role, deletedAt])
+}
+
+/// Client & Vendor/Pemasok (integrasi Master Data Contact, §11).
+model Contact {
+  id        String      @id @default(cuid())
+  name      String
+  type      ContactType @default(CLIENT)
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime?
+
+  projectsAsClient Project[] @relation("ProjectClient")
+  wbsItemsAsVendor WbsItem[] @relation("WbsVendor")
+
+  @@index([type, deletedAt])
+  @@index([name])
+}
+
+// ============================================================================
+// PROJECT (Master Data Project, §7.1)
+// ============================================================================
+
+model Project {
+  id          String  @id @default(cuid())
+  code        String  @unique // PRJ-YYYY-NNNNN (§7.1.1) — tidak pernah berubah (BR-1)
+  name        String  @db.VarChar(150)
+  description String? @db.Text
+
+  startDate  DateTime @db.Date
+  finishDate DateTime @db.Date
+
+  progressPct Decimal @default(0) @db.Decimal(5, 2) // read-only, terhitung (§8.1)
+  status      ProjectStatus @default(DRAFT)
+
+  clientId String
+  client   Contact @relation("ProjectClient", fields: [clientId], references: [id])
+
+  picId String
+  pic   User   @relation("ProjectPic", fields: [picId], references: [id])
+
+  contractValue Decimal? @db.Decimal(18, 2)
+  initialBudget Decimal? @db.Decimal(18, 2) // dari Initiating
+  totalBudget   Decimal  @default(0) @db.Decimal(18, 2) // terhitung (§8.2)
+  actualCost    Decimal  @default(0) @db.Decimal(18, 2) // terhitung (§8.2)
+
+  // Overbudget (§7.2.3 D, §8.3)
+  allowOverbudget         Boolean  @default(false)
+  overbudgetTolerancePct  Decimal? @db.Decimal(5, 2)
+  overbudgetReason        String?  @db.Text
+  isOverbudget            Boolean  @default(false)
+
+  actualFinishDate DateTime? @db.Date // otomatis saat Closed
+
+  createdBy String?
+  updatedBy String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  locations   ProjectLocation[]
+  stages      ProjectStage[]
+  members     ProjectMember[]
+  wbsItems    WbsItem[]
+  documents   ProjectDocument[]
+  risks       ProjectRisk[]
+  attachments ProjectAttachment[]
+  auditLogs   AuditLog[]
+
+  @@index([status, deletedAt])
+  @@index([clientId])
+  @@index([picId])
+}
+
+model ProjectLocation {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name      String
+  address   String?
+  city      String?
+  province  String?
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+  weightPct Decimal  @default(0) @db.Decimal(5, 2) // total per proyek harus 100% (BR-7)
+
+  picId String?
+  pic   User?  @relation("LocationPic", fields: [picId], references: [id])
+
+  isCompleted Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  wbsItems WbsItem[]
+
+  @@index([projectId])
+}
+
+/// PIC & tim proyek (§9: project_member).
+model ProjectMember {
+  id        String            @id @default(cuid())
+  projectId String
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  role      ProjectMemberRole @default(ANGGOTA)
+  createdAt DateTime          @default(now())
+
+  @@unique([projectId, userId, role])
+  @@index([userId])
+}
+
+model ProjectAttachment {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  mimeType   String?
+  sizeBytes  Int?
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  @@index([projectId])
+}
+
+// ============================================================================
+// STAGES (Master Data Tahapan, §7.2)
+// ============================================================================
+
+model ProjectStage {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  stageType     StageType
+  sequence      Int // 1..5
+  status        StageStatus @default(NOT_STARTED)
+  completionPct Decimal     @default(0) @db.Decimal(5, 2)
+
+  picId String?
+  pic   User?  @relation("StagePic", fields: [picId], references: [id])
+
+  actualStart DateTime? @db.Date
+  actualEnd   DateTime? @db.Date
+
+  approvedById    String?
+  approvedBy      User?     @relation("StageApprover", fields: [approvedById], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?   @db.Text
+  notes           String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  initiatingForm     InitiatingForm?
+  initiatingChecks   InitiatingChecklist[]
+
+  @@unique([projectId, stageType])
+  @@index([projectId])
+}
+
+// ---- Tahap 1: Initiating (§7.2.2) ----
+
+model InitiatingForm {
+  id      String       @id @default(cuid())
+  stageId String       @unique
+  stage   ProjectStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  objective       String  @db.Text
+  inScope         String? @db.Text
+  outOfScope      String? @db.Text
+  assumptions     Json?   // list
+  constraints     Json?   // list
+  initialBudget   Decimal? @db.Decimal(18, 2)
+  estimatedDays   Int?
+
+  sponsorApproverId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliverables InitiatingDeliverable[]
+  stakeholders InitiatingStakeholder[]
+  initialRisks InitiatingRisk[]
+}
+
+model InitiatingDeliverable {
+  id          String         @id @default(cuid())
+  formId      String
+  form        InitiatingForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  name        String
+  description String?        @db.Text
+  targetDate  DateTime?      @db.Date
+
+  @@index([formId])
+}
+
+model InitiatingStakeholder {
+  id        String         @id @default(cuid())
+  formId    String
+  form      InitiatingForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  name      String
+  role      String?
+  contact   String?
+  influence InfluenceLevel @default(MEDIUM)
+
+  @@index([formId])
+}
+
+model InitiatingRisk {
+  id          String         @id @default(cuid())
+  formId      String
+  form        InitiatingForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  description String         @db.Text
+  impact      String?
+  likelihood  String?
+
+  @@index([formId])
+}
+
+model InitiatingChecklist {
+  id        String       @id @default(cuid())
+  stageId   String
+  stage     ProjectStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  text           String
+  isRequired     Boolean   @default(true)
+  responsibleId  String?
+  isChecked      Boolean   @default(false)
+  checkedAt      DateTime?
+  notes          String?   @db.Text
+  attachmentUrl  String?
+  sortOrder      Int       @default(0)
+
+  @@index([stageId])
+}
+
+// ============================================================================
+// WBS (Tahap 2: Planning, §7.2.3) — self-referencing tree, max 4 level
+// ============================================================================
+
+model WbsItem {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   WbsItem?  @relation("WbsTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children WbsItem[] @relation("WbsTree")
+
+  locationId String
+  location   ProjectLocation @relation(fields: [locationId], references: [id]) // BR-6: satu lokasi
+
+  wbsNumber String // "1", "1.1", "1.1.1", "1.1.1.1" (§7.2.3 A)
+  level     Int    @default(1) // 1..4
+  sortOrder Int    @default(0)
+
+  name     String      @db.VarChar(200)
+  itemType WbsItemType @default(GROUP)
+  uom      String? // hari/jam/ls/titik | pcs/kg/m/m2/m3/unit/dus
+
+  qty         Decimal? @db.Decimal(18, 4) // leaf only
+  unitBudget  Decimal? @db.Decimal(18, 2) // leaf only (harga satuan)
+  totalBudget Decimal  @default(0) @db.Decimal(18, 2) // terhitung = qty * unitBudget
+
+  weightPct Decimal? @db.Decimal(7, 4) // default proporsional; boleh manual
+
+  startDate DateTime? @db.Date
+  endDate   DateTime? @db.Date
+
+  picId String?
+  pic   User?  @relation("WbsPic", fields: [picId], references: [id])
+
+  vendorId String?
+  vendor   Contact? @relation("WbsVendor", fields: [vendorId], references: [id])
+
+  predecessorId String?
+  predecessor   WbsItem?  @relation("WbsPredecessor", fields: [predecessorId], references: [id])
+  successors    WbsItem[] @relation("WbsPredecessor")
+
+  notes        String?  @db.VarChar(500)
+  isQcRequired Boolean  @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  execution ExecutionRecord?
+  qc        QcRecord?
+  baselines WbsBaseline[]
+
+  @@index([projectId, parentId, sortOrder])
+  @@index([locationId])
+  @@index([predecessorId])
+}
+
+/// Snapshot Planning saat Approved — Baseline v1, v2, ... (§7.2.3 E)
+model WbsBaseline {
+  id        String  @id @default(cuid())
+  wbsItemId String
+  wbsItem   WbsItem @relation(fields: [wbsItemId], references: [id], onDelete: Cascade)
+
+  version     Int
+  wbsNumber   String
+  name        String
+  itemType    WbsItemType
+  qty         Decimal? @db.Decimal(18, 4)
+  unitBudget  Decimal? @db.Decimal(18, 2)
+  totalBudget Decimal  @db.Decimal(18, 2)
+  weightPct   Decimal? @db.Decimal(7, 4)
+  startDate   DateTime? @db.Date
+  endDate     DateTime? @db.Date
+  snapshotAt  DateTime @default(now())
+
+  @@index([wbsItemId, version])
+}
+
+// ============================================================================
+// EXECUTING (Tahap 3, §7.2.4) — cermin 1:1 baris daun Planning
+// ============================================================================
+
+model ExecutionRecord {
+  id        String  @id @default(cuid())
+  wbsItemId String  @unique
+  wbsItem   WbsItem @relation(fields: [wbsItemId], references: [id], onDelete: Cascade)
+
+  actualQty   Decimal? @db.Decimal(18, 4)
+  progressPct Decimal  @default(0) @db.Decimal(5, 2) // 0..100
+  actualCost  Decimal  @default(0) @db.Decimal(18, 2) // terhitung = Σ cost_actual
+
+  isCompleted   Boolean   @default(false)
+  completedAt   DateTime?
+  completedById String?
+  completedBy   User?     @relation("ExecCompletedBy", fields: [completedById], references: [id])
+
+  status ExecutionStatus @default(NOT_STARTED)
+
+  actualStart DateTime? @db.Date
+  actualEnd   DateTime? @db.Date
+
+  picId String?
+  pic   User?  @relation("ExecPic", fields: [picId], references: [id])
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  costActuals CostActual[]
+
+  @@index([status])
+}
+
+/// Catatan Realisasi Biaya per baris (§7.2.4 C)
+model CostActual {
+  id                String          @id @default(cuid())
+  executionRecordId String
+  executionRecord   ExecutionRecord @relation(fields: [executionRecordId], references: [id], onDelete: Cascade)
+
+  date         DateTime @db.Date
+  description  String   @db.Text
+  amount       Decimal  @db.Decimal(18, 2)
+  referenceNo  String?
+  attachmentUrl String?
+
+  createdBy String?
+  createdAt DateTime @default(now())
+
+  @@index([executionRecordId, date])
+}
+
+// ============================================================================
+// MONITORING & CONTROLLING (Tahap 4, §7.2.5)
+// ============================================================================
+
+model QcRecord {
+  id        String  @id @default(cuid())
+  wbsItemId String  @unique
+  wbsItem   WbsItem @relation(fields: [wbsItemId], references: [id], onDelete: Cascade)
+
+  qcStatus       QcStatus  @default(BELUM_DIPERIKSA)
+  inspectionDate DateTime? @db.Date
+
+  inspectorId String?
+  inspector   User?   @relation("QcInspector", fields: [inspectorId], references: [id])
+
+  findings          String? @db.Text // wajib jika FAILED/PERLU_PERBAIKAN (validasi app-level)
+  correctiveAction  String? @db.Text // wajib jika FAILED
+  remediationDue    DateTime? @db.Date
+  remediationStatus RemediationStatus?
+  attachmentUrls    Json? // string[] bukti (wajib jika FAILED)
+  notes             String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([qcStatus])
+}
+
+model ProjectRisk {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  code        String // RSK-NNN
+  description String       @db.Text
+  category    RiskCategory
+  likelihood  Int // 1..5
+  impact      Int // 1..5
+  score       Int          @default(0) // terhitung = likelihood * impact
+
+  mitigationStrategy MitigationStrategy?
+  mitigationPlan     String?             @db.Text
+
+  ownerId String?
+  owner   User?   @relation("RiskOwner", fields: [ownerId], references: [id])
+
+  status         RiskStatus @default(OPEN)
+  affectedWbsIds Json? // string[] baris Planning terdampak
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, code])
+  @@index([projectId, status])
+}
+
+// ============================================================================
+// CLOSING (Tahap 5, §7.2.6)
+// ============================================================================
+
+model ProjectDocument {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name         String
+  isRequired   Boolean        @default(false)
+  status       DocumentStatus @default(BELUM)
+  fileUrl      String?
+  documentNo   String?
+  documentDate DateTime?      @db.Date
+
+  verifiedById String?
+  verifiedAt   DateTime?
+  waiverReason String?  @db.Text // wajib jika TIDAK_BERLAKU untuk dokumen wajib
+  notes        String?  @db.Text
+  sortOrder    Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+// ============================================================================
+// AUDIT (§10) — setiap create/update/delete/status-change tercatat
+// ============================================================================
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  entityType String // "Project", "WbsItem", ...
+  entityId   String
+  action     AuditAction
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  oldValue Json?
+  newValue Json?
+  reason   String? @db.Text
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([projectId, createdAt])
+  @@index([actorId])
+}

@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Izinkan build script native yang dibutuhkan (Prisma engine, esbuild binary, Nest).
+onlyBuiltDependencies:
+  - "@nestjs/core"
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "esbuild"
+  - "prisma"
