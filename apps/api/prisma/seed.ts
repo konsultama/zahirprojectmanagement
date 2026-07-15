@@ -63,7 +63,21 @@ async function main() {
   await prisma.project.deleteMany();
   await prisma.contact.deleteMany();
   await prisma.persona.deleteMany();
+  await prisma.checklistTemplate.deleteMany();
   await prisma.user.deleteMany();
+
+  // --- Template Checklist Persetujuan Initiating (§7.2.2 B) ---
+  await prisma.checklistTemplate.createMany({
+    data: [
+      { text: 'Tujuan & ruang lingkup disepakati bersama client', isRequired: true, needsAttachment: false, sortOrder: 1 },
+      { text: 'Stakeholder teridentifikasi lengkap', isRequired: true, needsAttachment: false, sortOrder: 2 },
+      { text: 'Estimasi anggaran awal disetujui', isRequired: true, needsAttachment: false, sortOrder: 3 },
+      { text: 'Dokumen kontrak / SPK tersedia', isRequired: true, needsAttachment: true, sortOrder: 4 },
+      { text: 'Project charter ditandatangani', isRequired: true, needsAttachment: true, sortOrder: 5 },
+      { text: 'Sumber daya inti tersedia', isRequired: false, needsAttachment: false, sortOrder: 6 },
+      { text: 'Risiko awal diidentifikasi', isRequired: false, needsAttachment: false, sortOrder: 7 },
+    ],
+  });
 
   // --- Persona (§5) dipetakan ke Role sistem ---
   await prisma.persona.createMany({

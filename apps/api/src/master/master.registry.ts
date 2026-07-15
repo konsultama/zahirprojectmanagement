@@ -61,6 +61,14 @@ export const MASTER_REGISTRY: Record<string, MasterConfig> = {
     search: ['code', 'name', 'address'],
     orderBy: { code: 'asc' },
   },
+  'checklist-template': {
+    delegate: 'checklistTemplate',
+    label: 'Checklist Persetujuan',
+    fields: { text: 'string', isRequired: 'boolean', needsAttachment: 'boolean', sortOrder: 'number', isActive: 'boolean' },
+    required: ['text'],
+    search: ['text'],
+    orderBy: { sortOrder: 'asc' },
+  },
   persona: {
     delegate: 'persona',
     label: 'Persona',

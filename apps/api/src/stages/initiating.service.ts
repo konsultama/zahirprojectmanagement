@@ -47,8 +47,17 @@ export class InitiatingService {
       orderBy: { sortOrder: 'asc' },
     });
     if (checklist.length === 0) {
+      // Use the configurable master template (§7.2.2 B); fall back to the built-in default
+      const template = await this.prisma.checklistTemplate.findMany({
+        where: { isActive: true, deletedAt: null },
+        orderBy: { sortOrder: 'asc' },
+      });
+      const source =
+        template.length > 0
+          ? template.map((t) => ({ text: t.text, isRequired: t.isRequired }))
+          : DEFAULT_INITIATING_CHECKLIST;
       await this.prisma.initiatingChecklist.createMany({
-        data: DEFAULT_INITIATING_CHECKLIST.map((c, i) => ({
+        data: source.map((c, i) => ({
           stageId: stage.id,
           text: c.text,
           isRequired: c.isRequired,

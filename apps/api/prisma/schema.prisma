@@ -788,3 +788,18 @@ model RolePermission {
   @@unique([role, permissionKey])
   @@index([role])
 }
+
+/// Template Checklist Persetujuan Initiating (§7.2.2 B) — dapat dikonfigurasi Admin.
+model ChecklistTemplate {
+  id              String    @id @default(cuid())
+  text            String
+  isRequired      Boolean   @default(true)
+  needsAttachment Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([deletedAt, isActive])
+}

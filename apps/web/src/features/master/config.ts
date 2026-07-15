@@ -172,6 +172,26 @@ export const MASTER_ENTITIES: EntityConfig[] = [
     ],
   },
   {
+    key: 'checklist-template',
+    label: 'Checklist Persetujuan',
+    icon: 'ListChecks',
+    accent: 'rgba(2,127,179,0.15)',
+    columns: [
+      { key: 'sortOrder', label: 'Urutan' },
+      { key: 'text', label: 'Item Checklist' },
+      { key: 'isRequired', label: 'Wajib', kind: 'boolean' },
+      { key: 'needsAttachment', label: 'Perlu Lampiran', kind: 'boolean' },
+      { key: 'isActive', label: 'Aktif', kind: 'boolean' },
+    ],
+    fields: [
+      { key: 'text', label: 'Teks Item', type: 'text', required: true },
+      { key: 'sortOrder', label: 'Urutan', type: 'number' },
+      { key: 'isRequired', label: 'Wajib', type: 'boolean' },
+      { key: 'needsAttachment', label: 'Perlu Lampiran', type: 'boolean' },
+      { key: 'isActive', label: 'Aktif', type: 'boolean' },
+    ],
+  },
+  {
     key: 'product-type',
     label: 'Product Type',
     icon: 'Tags',

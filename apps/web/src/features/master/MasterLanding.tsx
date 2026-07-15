@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Users, BookOpen, Boxes, Ruler, Warehouse, Tags } from 'lucide-react';
+import { Users, BookOpen, Boxes, Ruler, Warehouse, Tags, ListChecks } from 'lucide-react';
 import { MASTER_ENTITIES } from './config';
 
-const ICONS: Record<string, typeof Users> = { Users, BookOpen, Boxes, Ruler, Warehouse, Tags };
+const ICONS: Record<string, typeof Users> = { Users, BookOpen, Boxes, Ruler, Warehouse, Tags, ListChecks };
 
 export function MasterLanding() {
   return (
