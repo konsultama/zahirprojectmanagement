@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-type FieldType = 'string' | 'number' | 'boolean';
+type FieldType = 'string' | 'number' | 'boolean' | 'enum';
 
 export interface MasterConfig {
   /** Prisma delegate name (key on PrismaService). */
@@ -24,7 +24,7 @@ export const MASTER_REGISTRY: Record<string, MasterConfig> = {
   contact: {
     delegate: 'contact',
     label: 'Data Kontak',
-    fields: { name: 'string', type: 'string', email: 'string', phone: 'string', address: 'string' },
+    fields: { name: 'string', type: 'enum', email: 'string', phone: 'string', address: 'string' },
     required: ['name'],
     search: ['name', 'email', 'phone'],
     orderBy: { name: 'asc' },
@@ -32,7 +32,7 @@ export const MASTER_REGISTRY: Record<string, MasterConfig> = {
   account: {
     delegate: 'account',
     label: 'Daftar Akun',
-    fields: { code: 'string', name: 'string', category: 'string', normalBalance: 'string', isActive: 'boolean' },
+    fields: { code: 'string', name: 'string', category: 'enum', normalBalance: 'enum', isActive: 'boolean' },
     required: ['code', 'name'],
     search: ['code', 'name'],
     orderBy: { code: 'asc' },

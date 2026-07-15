@@ -18,8 +18,13 @@ function defaults(config: EntityConfig, initial: Record<string, unknown> | null)
     if (initial) {
       // reference fields map to <key>Id already present on the row
       out[f.key] = initial[f.key] ?? '';
+    } else if (f.type === 'boolean') {
+      out[f.key] = true;
+    } else if (f.type === 'select') {
+      // enum columns are non-nullable — start on a valid option, not blank
+      out[f.key] = f.options?.[0]?.value ?? '';
     } else {
-      out[f.key] = f.type === 'boolean' ? true : '';
+      out[f.key] = '';
     }
   }
   return out;
@@ -95,7 +100,6 @@ function FieldInput({ field, value, error, onChange }: { field: Field; value: un
         <textarea rows={2} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
       ) : field.type === 'select' ? (
         <select value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
-          <option value="">—</option>
           {field.options?.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}

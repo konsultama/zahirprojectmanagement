@@ -30,13 +30,23 @@ export class MasterService {
     for (const [key, type] of Object.entries(cfg.fields)) {
       if (!(key in body)) continue;
       const raw = body[key];
-      if (raw === '' || raw === null) {
-        out[key] = null;
+      if (raw === '' || raw === null || raw === undefined) {
+        // enum columns are non-nullable with a DB default → omit so the default
+        // applies. numeric/boolean → 0/false. string/reference → null (nullable).
+        if (type === 'enum') continue;
+        if (type === 'number') out[key] = 0;
+        else if (type === 'boolean') out[key] = false;
+        else out[key] = null;
         continue;
       }
-      if (type === 'number') out[key] = Number(raw);
-      else if (type === 'boolean') out[key] = raw === true || raw === 'true';
-      else out[key] = String(raw);
+      if (type === 'number') {
+        const n = Number(raw);
+        out[key] = Number.isNaN(n) ? 0 : n;
+      } else if (type === 'boolean') {
+        out[key] = raw === true || raw === 'true';
+      } else {
+        out[key] = String(raw);
+      }
     }
     return out;
   }
