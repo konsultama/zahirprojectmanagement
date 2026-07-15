@@ -142,9 +142,6 @@ export function ProjectForm() {
     <div className="page">
       <div className="page-head">
         <h1>{isEdit ? 'Ubah Proyek' : 'Proyek Baru'}</h1>
-        <button className="btn-ghost" onClick={() => navigate(-1)}>
-          Batal
-        </button>
       </div>
 
       {banner.length > 0 && (
@@ -253,6 +250,9 @@ export function ProjectForm() {
       </div>
 
       <div className="form-footer">
+        <button className="btn-ghost" onClick={() => navigate(-1)} disabled={busy}>
+          Batal
+        </button>
         <button className="btn-primary" onClick={submit} disabled={busy}>
           {busy ? 'Menyimpan…' : 'Simpan Proyek'}
         </button>
