@@ -1,56 +1,63 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet, type HealthResponse } from './lib/api';
+import { SessionProvider, useSession } from './session';
+import { ToastProvider } from './components/Toast';
+import { ProjectList } from './features/projects/ProjectList';
+import { ProjectForm } from './features/projects/ProjectForm';
+import { ProjectDetail } from './features/projects/ProjectDetail';
 
-const STAGES = ['Initiating', 'Planning', 'Executing', 'Monitoring & Controlling', 'Closing'];
-
-export function App() {
-  const { data, isLoading, isError } = useQuery({
+function TopBar() {
+  const { users, currentUser, switchUser } = useSession();
+  const health = useQuery({
     queryKey: ['health'],
     queryFn: () => apiGet<HealthResponse>('/health'),
     retry: false,
+    refetchInterval: 30000,
   });
-
-  const apiStatus = isLoading ? 'memeriksa…' : isError ? 'tidak terhubung' : (data?.status ?? '—');
-  const dbStatus = isLoading ? '…' : isError ? '—' : (data?.db ?? '—');
+  const dbUp = health.data?.db === 'up';
 
   return (
-    <main className="shell">
-      <header>
-        <h1>Aplikasi Project Management</h1>
-        <p className="subtitle">Zahir · modul PROJ · siklus hidup proyek PMBOK</p>
-      </header>
+    <header className="topbar">
+      <div className="brand">
+        <span className="brand-mark">PROJ</span>
+        <span className="brand-name">Project Management</span>
+      </div>
+      <div className="topbar-right">
+        <span className={`db-dot ${dbUp ? 'up' : 'down'}`} title={dbUp ? 'DB terhubung' : 'DB terputus'} />
+        <label className="user-switch">
+          <span>Masuk sebagai</span>
+          <select value={currentUser?.id ?? ''} onChange={(e) => switchUser(e.target.value)}>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name} ({u.role})
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </header>
+  );
+}
 
-      <section className="card">
-        <h2>Status Sistem</h2>
-        <dl className="status">
-          <div>
-            <dt>API</dt>
-            <dd className={isError ? 'bad' : 'good'}>{apiStatus}</dd>
-          </div>
-          <div>
-            <dt>Database</dt>
-            <dd className={dbStatus === 'up' ? 'good' : 'bad'}>{dbStatus}</dd>
-          </div>
-        </dl>
-        {isError && (
-          <p className="hint">
-            API belum berjalan. Jalankan <code>pnpm db:up</code> lalu <code>pnpm dev</code>.
-          </p>
-        )}
-      </section>
-
-      <section className="card">
-        <h2>5 Tahapan</h2>
-        <ol className="stages">
-          {STAGES.map((s, i) => (
-            <li key={s}>
-              <span className="num">{i + 1}</span>
-              {s}
-            </li>
-          ))}
-        </ol>
-        <p className="hint">Scaffold aktif. Modul Master Data Project & tahapan menyusul.</p>
-      </section>
-    </main>
+export function App() {
+  return (
+    <BrowserRouter>
+      <ToastProvider>
+        <SessionProvider>
+          <TopBar />
+          <main className="app-main">
+            <Routes>
+              <Route path="/" element={<Navigate to="/projects" replace />} />
+              <Route path="/projects" element={<ProjectList />} />
+              <Route path="/projects/new" element={<ProjectForm />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/projects/:id/edit" element={<ProjectForm />} />
+              <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />
+            </Routes>
+          </main>
+        </SessionProvider>
+      </ToastProvider>
+    </BrowserRouter>
   );
 }

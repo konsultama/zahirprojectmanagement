@@ -56,6 +56,30 @@ pnpm dev
 | `pnpm db:studio` | Buka Prisma Studio |
 | `pnpm build` | Build kedua aplikasi |
 
+## Modul yang sudah ada
+
+### Master Data Project (§7.1) ✅
+- CRUD proyek + kode otomatis `PRJ-YYYY-NNNNN` (immutable).
+- Multi-lokasi dengan validasi bobot 100% + "Bagi rata".
+- State machine status (§7.1.3) dengan gating (Initiating approved, QC, dokumen) & alasan wajib.
+- 5 tahapan otomatis dibuat saat proyek dibuat.
+- RBAC per peran + data-scope (PM/Supervisor/QC hanya proyek yang ditugaskan).
+- Audit trail otomatis (create/update/status).
+- UI: daftar proyek (cari/filter/sortir/paginasi), form create/edit, halaman detail bertab, toast, dan **user switcher** untuk mencoba peran berbeda.
+
+### API utama
+| Method | Endpoint | Peran |
+|---|---|---|
+| `GET` | `/api/projects` | semua (data-scoped) |
+| `POST` | `/api/projects` | Admin, PM |
+| `GET` | `/api/projects/:id` | semua (data-scoped) |
+| `PATCH` | `/api/projects/:id` | Admin, PM |
+| `POST` | `/api/projects/:id/status` | per-transisi |
+| `DELETE` | `/api/projects/:id` | Admin |
+| `GET` | `/api/contacts`, `/api/users` | dropdown |
+
+> **Auth MVP:** peran ditentukan lewat header `x-user-id` (dipilih dari user switcher di UI). JWT login menyusul.
+
 ## Status
 
-🚧 **MVP — dalam pengembangan.** Tahap saat ini: scaffold monorepo + model data (PRD §9). Modul fungsional (Master Data Project & 5 tahapan) menyusul.
+🚧 **MVP — dalam pengembangan.** Selesai: scaffold + model data (§9), **Master Data Project (§7.1)**. Berikutnya: Master Data Tahapan (§7.2 — Initiating → Closing).
