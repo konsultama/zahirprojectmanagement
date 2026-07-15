@@ -22,6 +22,15 @@ export function useMasterList(entity: string, page: number, search: string) {
   });
 }
 
+/** User accounts for the user-ref field (persona link). */
+export function useUsers(enabled: boolean) {
+  return useQuery({
+    queryKey: ['users-all'],
+    queryFn: () => apiGet<{ id: string; name: string; role: string }[]>('/users'),
+    enabled,
+  });
+}
+
 /** All rows of an entity for reference dropdowns. */
 export function useMasterOptions(entity: string | undefined) {
   return useQuery({

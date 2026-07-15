@@ -1,4 +1,12 @@
-export type FieldType = 'text' | 'number' | 'currency' | 'boolean' | 'select' | 'reference' | 'textarea';
+export type FieldType =
+  | 'text'
+  | 'number'
+  | 'currency'
+  | 'boolean'
+  | 'select'
+  | 'reference'
+  | 'user-ref'
+  | 'textarea';
 
 export interface Field {
   key: string;
@@ -41,6 +49,7 @@ export const MASTER_ENTITIES: EntityConfig[] = [
       { key: 'name', label: 'Nama' },
       { key: 'roleTitle', label: 'Peran' },
       { key: 'systemRole', label: 'Role Sistem' },
+      { key: 'user', label: 'Akun User', kind: 'ref' },
       { key: 'mainNeed', label: 'Kebutuhan Utama' },
       { key: 'isActive', label: 'Aktif', kind: 'boolean' },
     ],
@@ -48,6 +57,7 @@ export const MASTER_ENTITIES: EntityConfig[] = [
       { key: 'name', label: 'Nama Persona', type: 'text', required: true },
       { key: 'roleTitle', label: 'Peran', type: 'text', required: true },
       { key: 'systemRole', label: 'Role Sistem', type: 'select', options: SYSTEM_ROLES },
+      { key: 'userId', label: 'Akun User (login "Masuk sebagai")', type: 'user-ref' },
       { key: 'mainNeed', label: 'Kebutuhan Utama', type: 'textarea' },
       { key: 'isActive', label: 'Aktif', type: 'boolean' },
     ],

@@ -72,9 +72,10 @@ export const MASTER_REGISTRY: Record<string, MasterConfig> = {
   persona: {
     delegate: 'persona',
     label: 'Persona',
-    fields: { name: 'string', roleTitle: 'string', systemRole: 'enum', mainNeed: 'string', isActive: 'boolean' },
+    fields: { name: 'string', roleTitle: 'string', systemRole: 'enum', mainNeed: 'string', userId: 'string', isActive: 'boolean' },
     required: ['name', 'roleTitle'],
     search: ['name', 'roleTitle'],
+    include: { user: { select: { id: true, name: true } } },
     orderBy: { name: 'asc' },
   },
   product: {

@@ -7,6 +7,7 @@ interface Persona {
   name: string;
   roleTitle: string;
   systemRole: Role | null;
+  userId: string | null;
 }
 
 /** A persona from master data, resolved to a user account for auth (x-user-id). */
@@ -65,7 +66,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // map each persona to a user with the same system role
     const personas: PersonaOption[] = personaRows
       .map((p) => {
-        const user = p.systemRole ? users.find((u) => u.role === p.systemRole) : undefined;
+        // prefer the explicit linked user; fall back to matching by system role
+        const user = (p.userId ? users.find((u) => u.id === p.userId) : undefined) ??
+          (p.systemRole ? users.find((u) => u.role === p.systemRole) : undefined);
         return user
           ? { personaId: p.id, name: p.name, roleTitle: p.roleTitle, userId: user.id, role: user.role as Role }
           : null;

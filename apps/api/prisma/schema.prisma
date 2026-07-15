@@ -179,6 +179,7 @@ model User {
   qcInspections       QcRecord[]        @relation("QcInspector")
   risksOwned          ProjectRisk[]     @relation("RiskOwner")
   auditLogs           AuditLog[]
+  personas            Persona[]
 
   @@index([role, deletedAt])
 }
@@ -769,12 +770,15 @@ model Persona {
   roleTitle  String // Peran, mis. "Project Manager"
   systemRole Role? // Role sistem yang dipetakan
   mainNeed   String? // Kebutuhan utama
+  userId     String? // akun user yang ditautkan (opsi login "Masuk sebagai")
+  user       User?     @relation(fields: [userId], references: [id])
   isActive   Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
 
   @@index([deletedAt])
+  @@index([userId])
 }
 
 /// Matriks Peran & Hak Akses (§6) — dapat dikonfigurasi Admin.

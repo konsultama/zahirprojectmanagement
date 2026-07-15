@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { ApiError } from '../../lib/api';
 import { useToast } from '../../components/Toast';
-import { useMasterOptions } from './api';
+import { useMasterOptions, useUsers } from './api';
 import type { EntityConfig, Field } from './config';
 
 interface Props {
@@ -85,6 +85,7 @@ export function MasterForm({ config, initial, onClose, onSave }: Props) {
 
 function FieldInput({ field, value, error, onChange }: { field: Field; value: unknown; error?: string; onChange: (v: unknown) => void }) {
   const refOptions = useMasterOptions(field.type === 'reference' ? field.ref : undefined);
+  const users = useUsers(field.type === 'user-ref');
 
   return (
     <div className="field">
@@ -109,6 +110,13 @@ function FieldInput({ field, value, error, onChange }: { field: Field; value: un
           <option value="">—</option>
           {(refOptions.data?.data ?? []).map((o) => (
             <option key={o.id} value={o.id}>{String(o.name ?? o.code ?? o.id)}</option>
+          ))}
+        </select>
+      ) : field.type === 'user-ref' ? (
+        <select value={String(value ?? '')} onChange={(e) => onChange(e.target.value)}>
+          <option value="">— tidak ditautkan —</option>
+          {(users.data ?? []).map((u) => (
+            <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
           ))}
         </select>
       ) : (
