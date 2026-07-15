@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProjects, type ProjectFilters } from './api';
 import { StatusBadge, ProgressBar, OverbudgetFlag } from '../../components/ui';
-import { STATUS_META } from './statusConfig';
+import { STAGE_META, STAGE_STATUS_META, STATUS_META } from './statusConfig';
 import { formatDate, formatRupiah } from '../../lib/format';
 import type { ProjectStatus } from '../../lib/types';
 
@@ -82,6 +82,7 @@ export function ProjectList() {
               </th>
               <th style={{ width: 160 }}>Progress</th>
               <th>Serapan</th>
+              <th>Tahapan</th>
               <th className="sortable" onClick={() => toggleSort('status')}>
                 Status{sortMark('status')}
               </th>
@@ -90,14 +91,14 @@ export function ProjectList() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={9} className="muted center">
+                <td colSpan={10} className="muted center">
                   Memuat…
                 </td>
               </tr>
             )}
             {!isLoading && data?.data.length === 0 && (
               <tr>
-                <td colSpan={9} className="muted center">
+                <td colSpan={10} className="muted center">
                   Belum ada proyek. Klik "Proyek Baru" untuk membuat.
                 </td>
               </tr>
@@ -124,6 +125,19 @@ export function ProjectList() {
                 </td>
                 <td title={`${formatRupiah(p.actualCost)} / ${formatRupiah(p.totalBudget)}`}>
                   {p.serapanPct}%
+                </td>
+                <td>
+                  {p.activeStage ? (
+                    <span
+                      className="stage-chip"
+                      style={{ color: STAGE_STATUS_META[p.activeStage.status].color, borderColor: STAGE_STATUS_META[p.activeStage.status].color }}
+                      title={STAGE_STATUS_META[p.activeStage.status].label}
+                    >
+                      {STAGE_META[p.activeStage.stageType]}
+                    </span>
+                  ) : (
+                    '—'
+                  )}
                 </td>
                 <td>
                   <StatusBadge status={p.status} />

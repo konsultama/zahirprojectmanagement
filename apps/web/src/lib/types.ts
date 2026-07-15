@@ -65,6 +65,7 @@ export interface ProjectListRow {
   actualCost: number;
   serapanPct: number;
   status: ProjectStatus;
+  activeStage: { stageType: StageType; status: StageStatus } | null;
   isOverbudget: boolean;
 }
 

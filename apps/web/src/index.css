@@ -430,6 +430,15 @@ textarea {
   font-size: 0.72rem;
   font-weight: 700;
 }
+.stage-chip {
+  display: inline-block;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
 
 /* ---- Badge / progress ---- */
 .badge {

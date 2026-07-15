@@ -201,28 +201,35 @@ export class ProjectsService {
           client: { select: { id: true, name: true } },
           pic: { select: { id: true, name: true } },
           locations: { select: { id: true, name: true, province: true } },
+          stages: { select: { stageType: true, status: true, sequence: true } },
         },
       }),
     ]);
 
     return {
-      data: rows.map((p) => ({
-        id: p.id,
-        code: p.code,
-        name: p.name,
-        client: p.client,
-        pic: p.pic,
-        locationCount: p.locations.length,
-        locations: p.locations,
-        startDate: p.startDate,
-        finishDate: p.finishDate,
-        progressPct: num(p.progressPct),
-        totalBudget: num(p.totalBudget),
-        actualCost: num(p.actualCost),
-        serapanPct: num(p.totalBudget) > 0 ? Math.round((num(p.actualCost) / num(p.totalBudget)) * 10000) / 100 : 0,
-        status: p.status,
-        isOverbudget: p.isOverbudget,
-      })),
+      data: rows.map((p) => {
+        // current active stage = first not-yet-approved stage (Closing when all approved)
+        const ordered = [...p.stages].sort((a, b) => a.sequence - b.sequence);
+        const active = ordered.find((s) => s.status !== StageStatus.APPROVED) ?? ordered[ordered.length - 1];
+        return {
+          id: p.id,
+          code: p.code,
+          name: p.name,
+          client: p.client,
+          pic: p.pic,
+          locationCount: p.locations.length,
+          locations: p.locations,
+          startDate: p.startDate,
+          finishDate: p.finishDate,
+          progressPct: num(p.progressPct),
+          totalBudget: num(p.totalBudget),
+          actualCost: num(p.actualCost),
+          serapanPct: num(p.totalBudget) > 0 ? Math.round((num(p.actualCost) / num(p.totalBudget)) * 10000) / 100 : 0,
+          status: p.status,
+          activeStage: active ? { stageType: active.stageType, status: active.status } : null,
+          isOverbudget: p.isOverbudget,
+        };
+      }),
       page: query.page,
       pageSize: query.pageSize,
       total,
