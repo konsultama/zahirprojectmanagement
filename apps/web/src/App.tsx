@@ -26,7 +26,9 @@ function initials(name?: string): string {
 }
 
 function TopBar({ onToggle }: { onToggle: () => void }) {
-  const { users, currentUser, switchUser } = useSession();
+  const { users, personas, currentUser, currentPersona, switchUser } = useSession();
+  // prefer the persona-driven switcher; fall back to raw users if no personas
+  const usePersonas = personas.length > 0;
   const health = useQuery({
     queryKey: ['health'],
     queryFn: () => apiGet<HealthResponse>('/health'),
@@ -52,16 +54,23 @@ function TopBar({ onToggle }: { onToggle: () => void }) {
           <Bell size={22} strokeWidth={2} />
         </button>
         <label className="user-switch">
+          <span className="muted user-switch-label">Masuk sebagai</span>
           <select value={currentUser?.id ?? ''} onChange={(e) => switchUser(e.target.value)} aria-label="Masuk sebagai">
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name} · {u.role}
-              </option>
-            ))}
+            {usePersonas
+              ? personas.map((p) => (
+                  <option key={p.personaId} value={p.userId}>
+                    {p.name} — {p.roleTitle}
+                  </option>
+                ))
+              : users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} · {u.role}
+                  </option>
+                ))}
           </select>
         </label>
-        <div className="avatar" title={currentUser?.name}>
-          {initials(currentUser?.name)}
+        <div className="avatar" title={currentPersona ? `${currentPersona.name} — ${currentPersona.roleTitle}` : currentUser?.name}>
+          {initials(currentPersona?.name ?? currentUser?.name)}
         </div>
       </div>
     </header>
