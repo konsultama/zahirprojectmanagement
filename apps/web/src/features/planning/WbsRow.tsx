@@ -20,6 +20,7 @@ interface Props {
   picOptions: RowOption[];
   vendorOptions: RowOption[];
   predecessorOptions: RowOption[];
+  locationOptions: RowOption[];
   onToggle: () => void;
   onUpdate: (patch: UpdateWbsPayload) => void;
   onAddChild: () => void;
@@ -36,6 +37,7 @@ export function WbsRow({
   picOptions,
   vendorOptions,
   predecessorOptions,
+  locationOptions,
   onToggle,
   onUpdate,
   onAddChild,
@@ -228,6 +230,18 @@ export function WbsRow({
       <tr className="wbs-detail-row">
         <td colSpan={11}>
           <div className="wbs-detail">
+            <div className="field">
+              <label className="field-label">Lokasi</label>
+              <select
+                value={node.locationId ?? ''}
+                disabled={!editable}
+                onChange={(e) => commit({ locationId: e.target.value })}
+              >
+                {locationOptions.map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="field">
               <label className="field-label">Tanggal Mulai</label>
               <input

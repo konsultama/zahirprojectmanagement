@@ -62,6 +62,7 @@ export interface CreateWbsPayload {
 export interface UpdateWbsPayload {
   name?: string;
   itemType?: 'TASK' | 'MATERIAL';
+  locationId?: string;
   uom?: string;
   qty?: number;
   unitBudget?: number;

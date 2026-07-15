@@ -5,7 +5,7 @@ import { useToast } from '../../components/Toast';
 import { useSession } from '../../session';
 import { formatRupiah } from '../../lib/format';
 import { STAGE_STATUS_META } from '../projects/statusConfig';
-import { useContacts, useUsersSearch } from '../projects/api';
+import { useContacts, useProject, useUsersSearch } from '../projects/api';
 import { WbsRow, type RowOption } from './WbsRow';
 import {
   useApprovePlanning,
@@ -34,8 +34,10 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
 
   const users = useUsersSearch('');
   const vendors = useContacts('VENDOR', '');
+  const project = useProject(projectId);
   const picOptions: RowOption[] = (users.data ?? []).map((u) => ({ id: u.id, label: u.name }));
   const vendorOptions: RowOption[] = (vendors.data ?? []).map((v) => ({ id: v.id, label: v.name }));
+  const locationOptions: RowOption[] = (project.data?.locations ?? []).map((l) => ({ id: l.id, label: l.name }));
 
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [showOver, setShowOver] = useState(false);
@@ -227,6 +229,7 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
                 picOptions={picOptions}
                 vendorOptions={vendorOptions}
                 predecessorOptions={predecessorOptions}
+                locationOptions={locationOptions}
                 onToggle={() => toggle(node.id)}
                 onUpdate={(patch) => update(node.id, patch)}
                 onAddChild={() => addChild(node.id)}
