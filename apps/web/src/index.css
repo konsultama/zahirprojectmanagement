@@ -835,6 +835,165 @@ textarea {
   font-size: 0.82rem;
 }
 
+/* ---- Planning panel ---- */
+.planning-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.banner-warn {
+  background: #fff6ed;
+  border: 1px solid #f9c896;
+  color: var(--warn);
+}
+.budget-summary {
+  position: sticky;
+  top: calc(var(--header-h) + 8px);
+  z-index: 5;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem;
+}
+.bs-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+}
+.bs-item strong {
+  font-size: 1.05rem;
+}
+.bs-status {
+  margin-left: auto;
+}
+.good {
+  color: var(--good);
+}
+
+.overbudget-box {
+  padding: 0.9rem 1.1rem;
+}
+.ob-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ob-toggle input {
+  width: auto;
+}
+.ob-fields {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-top: 0.75rem;
+}
+.ob-fields .field:first-child {
+  width: 120px;
+}
+
+/* ---- WBS tree table ---- */
+.wbs-table td {
+  padding: 0.3rem 0.5rem;
+  vertical-align: middle;
+}
+.wbs-table input,
+.wbs-table select {
+  padding: 0.35rem 0.45rem;
+  border-color: transparent;
+  background: transparent;
+}
+.wbs-table input:hover,
+.wbs-table select:hover {
+  border-color: var(--border-strong);
+}
+.wbs-table input:focus,
+.wbs-table select:focus {
+  border-color: var(--link);
+  background: #fff;
+}
+.wbs-table .cell-num {
+  text-align: right;
+}
+.wbs-table td.num {
+  text-align: right;
+}
+.wbs-table th.num {
+  text-align: right;
+}
+.wbs-row.group {
+  background: #f8fafc;
+  font-weight: 600;
+}
+.wbs-row.group .total {
+  font-weight: 700;
+}
+.wbs-num {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.tree-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-right: 0.3rem;
+  color: var(--muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.tree-spacer {
+  display: inline-block;
+  width: 18px;
+}
+.total {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+.tag-group {
+  background: #eef2ff;
+  color: var(--link);
+}
+.wbs-actions {
+  white-space: nowrap;
+}
+.row-icon {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 0.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.row-icon:hover {
+  background: #eef4f8;
+  color: var(--link);
+}
+.row-icon.danger:hover {
+  background: #fef2f1;
+  color: var(--danger);
+}
+.wbs-add {
+  padding: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.wbs-add .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 /* ---- Toast ---- */
 .toast-stack {
   position: fixed;

@@ -5,6 +5,7 @@ import { CommonModule } from './common/common.module';
 import { HealthController } from './health/health.controller';
 import { ProjectsModule } from './projects/projects.module';
 import { StagesModule } from './stages/stages.module';
+import { PlanningModule } from './planning/planning.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { UsersModule } from './users/users.module';
 import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
@@ -16,6 +17,7 @@ import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
     CommonModule,
     ProjectsModule,
     StagesModule,
+    PlanningModule,
     ContactsModule,
     UsersModule,
   ],
