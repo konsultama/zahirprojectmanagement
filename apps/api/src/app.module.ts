@@ -10,6 +10,7 @@ import { ExecutingModule } from './executing/executing.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { ClosingModule } from './closing/closing.module';
 import { AuditModule } from './audit/audit.module';
+import { MasterModule } from './master/master.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { UsersModule } from './users/users.module';
 import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
@@ -26,6 +27,7 @@ import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
     MonitoringModule,
     ClosingModule,
     AuditModule,
+    MasterModule,
     ContactsModule,
     UsersModule,
   ],

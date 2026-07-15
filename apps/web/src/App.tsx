@@ -9,6 +9,8 @@ import { Sidebar } from './components/Sidebar';
 import { ProjectList } from './features/projects/ProjectList';
 import { ProjectForm } from './features/projects/ProjectForm';
 import { ProjectDetail } from './features/projects/ProjectDetail';
+import { MasterLanding } from './features/master/MasterLanding';
+import { MasterList } from './features/master/MasterList';
 
 function initials(name?: string): string {
   if (!name) return '?';
@@ -94,6 +96,8 @@ export function App() {
                   <Route path="/projects/new" element={<ProjectForm />} />
                   <Route path="/projects/:id" element={<ProjectDetail />} />
                   <Route path="/projects/:id/edit" element={<ProjectForm />} />
+                  <Route path="/master" element={<MasterLanding />} />
+                  <Route path="/master/:entity" element={<MasterList />} />
                   <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />
                 </Routes>
               </main>

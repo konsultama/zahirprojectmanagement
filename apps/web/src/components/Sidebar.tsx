@@ -21,7 +21,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { label: 'Dasbor', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Proyek', to: '/projects', icon: Boxes },
-  { label: 'Data Master', icon: Database, disabled: true },
+  { label: 'Data Master', to: '/master', icon: Database },
   { label: 'Buku Besar', icon: BookOpen, disabled: true },
   { label: 'Penjualan', icon: ShoppingCart, disabled: true },
   { label: 'Kas & Bank', icon: Wallet, disabled: true },
