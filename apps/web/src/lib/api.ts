@@ -50,6 +50,11 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     await fetch(`${BASE_URL}${path}`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   );
 }
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  return handle<T>(
+    await fetch(`${BASE_URL}${path}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+  );
+}
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   return handle<T>(
     await fetch(`${BASE_URL}${path}`, { method: 'PATCH', headers: headers(), body: JSON.stringify(body) }),

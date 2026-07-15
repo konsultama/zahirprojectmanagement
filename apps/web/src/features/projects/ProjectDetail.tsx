@@ -7,6 +7,7 @@ import { StatusBadge, ProgressBar, OverbudgetFlag } from '../../components/ui';
 import { STAGE_META, STAGE_STATUS_META, STATUS_META, REASON_REQUIRED } from './statusConfig';
 import { formatDate, formatRupiah, daysUntil } from '../../lib/format';
 import { useChangeStatus, useDeleteProject, useProject } from './api';
+import { StagesTab } from '../stages/StagesTab';
 import type { ProjectStatus } from '../../lib/types';
 
 const TABS = ['Ringkasan', 'Lokasi', 'Tahapan', 'Dokumen', 'Riwayat'] as const;
@@ -215,11 +216,12 @@ export function ProjectDetail() {
         </div>
       )}
 
-      {(tab === 'Tahapan' || tab === 'Dokumen' || tab === 'Riwayat') && (
+      {tab === 'Tahapan' && <StagesTab projectId={p.id} />}
+
+      {(tab === 'Dokumen' || tab === 'Riwayat') && (
         <div className="card placeholder">
           <p>
-            Tab <strong>{tab}</strong> akan diisi oleh modul berikutnya (Master Data Tahapan / Dokumen / Audit
-            trail).
+            Tab <strong>{tab}</strong> akan diisi oleh modul berikutnya (Dokumen Closing / Audit trail).
           </p>
         </div>
       )}
