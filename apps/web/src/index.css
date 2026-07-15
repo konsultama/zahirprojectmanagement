@@ -441,6 +441,41 @@ textarea {
   white-space: nowrap;
 }
 
+/* ---- Reports ---- */
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+.report-sum-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.report-sum-item strong {
+  font-size: 1.2rem;
+}
+.pill-ok,
+.pill-bad {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill-ok {
+  background: #e7f6ee;
+  color: var(--good);
+}
+.pill-bad {
+  background: #fef2f1;
+  color: var(--danger);
+}
+
 /* ---- Badge / progress ---- */
 .badge {
   display: inline-flex;

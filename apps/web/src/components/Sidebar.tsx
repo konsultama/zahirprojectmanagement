@@ -13,7 +13,7 @@ const NAV: NavItem[] = [
   { label: 'Dasbor', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Proyek', to: '/projects', icon: Boxes },
   { label: 'Data Master', to: '/master', icon: Database },
-  { label: 'Laporan', icon: ChartColumn, disabled: true },
+  { label: 'Laporan', to: '/reports', icon: ChartColumn },
   { label: 'Pengaturan', to: '/settings', icon: Settings },
 ];
 

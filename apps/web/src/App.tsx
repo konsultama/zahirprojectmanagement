@@ -13,6 +13,8 @@ import { MasterLanding } from './features/master/MasterLanding';
 import { MasterList } from './features/master/MasterList';
 import { SettingsLanding } from './features/settings/SettingsLanding';
 import { RbacMatrix } from './features/settings/RbacMatrix';
+import { ReportsLanding } from './features/reports/ReportsLanding';
+import { ReportView } from './features/reports/ReportView';
 
 function initials(name?: string): string {
   if (!name) return '?';
@@ -106,6 +108,8 @@ export function App() {
                     element={<MasterList entityKey="persona" backTo="/settings" backLabel="Pengaturan" />}
                   />
                   <Route path="/settings/rbac" element={<RbacMatrix />} />
+                  <Route path="/reports" element={<ReportsLanding />} />
+                  <Route path="/reports/:key" element={<ReportView />} />
                   <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />
                 </Routes>
               </main>
