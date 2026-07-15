@@ -125,6 +125,26 @@ export const REPORTS: ReportConfig[] = [
     ],
   },
   {
+    key: 'vendor',
+    title: 'Kinerja Vendor',
+    description: 'Serapan biaya per vendor/pemasok lintas proyek.',
+    icon: 'Truck',
+    accent: 'rgba(162,120,66,0.15)',
+    columns: [
+      { key: 'vendor', label: 'Vendor' },
+      { key: 'projectCount', label: 'Jml Proyek', kind: 'number', num: true },
+      { key: 'itemCount', label: 'Jml Item', kind: 'number', num: true },
+      { key: 'plan', label: 'Anggaran Rencana', kind: 'currency', num: true },
+      { key: 'actual', label: 'Terpakai', kind: 'currency', num: true },
+      { key: 'variansPct', label: 'Varians', kind: 'percent', num: true },
+    ],
+    summary: [
+      { key: 'vendorCount', label: 'Jumlah Vendor', kind: 'number' },
+      { key: 'totalPlan', label: 'Total Rencana', kind: 'currency' },
+      { key: 'totalActual', label: 'Total Terpakai', kind: 'currency' },
+    ],
+  },
+  {
     key: 'risk',
     title: 'Register Risiko',
     description: 'Seluruh risiko lintas proyek, diurutkan berdasarkan skor.',

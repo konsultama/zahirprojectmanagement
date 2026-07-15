@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft, Printer } from 'lucide-react';
+import { ChevronLeft, Printer, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '../../lib/api';
 import { formatDate, formatRupiah } from '../../lib/format';
@@ -34,6 +34,15 @@ function render(value: unknown, kind?: CellKind) {
   return value == null || value === '' ? '—' : String(value);
 }
 
+function csvCell(value: unknown, kind?: CellKind): string {
+  let s: string;
+  if (kind === 'over') s = value ? 'Ya' : 'Tidak';
+  else if (kind === 'schedule') s = value ? 'On track' : 'Terlambat';
+  else if (kind === 'date') s = value ? String(value).slice(0, 10) : '';
+  else s = value == null ? '' : String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 export function ReportView() {
   const { key = '' } = useParams();
   const config = reportByKey(key);
@@ -45,6 +54,19 @@ export function ReportView() {
 
   if (!config) return <div className="page">Laporan tidak dikenali.</div>;
 
+  const exportCsv = () => {
+    if (!data) return;
+    const header = config.columns.map((c) => c.label).join(',');
+    const lines = data.rows.map((row) => config.columns.map((c) => csvCell(row[c.key], c.kind)).join(','));
+    const csv = '﻿' + [header, ...lines].join('\n'); // BOM for Excel UTF-8
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `laporan-${key}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="page">
       <div className="page-head">
@@ -54,9 +76,14 @@ export function ReportView() {
           </Link>
           <h1>{config.title}</h1>
         </div>
-        <button className="btn-ghost no-print" onClick={() => window.print()}>
-          <Printer size={16} /> Cetak
-        </button>
+        <div className="report-actions no-print">
+          <button className="btn-ghost" onClick={exportCsv} disabled={!data}>
+            <Download size={16} /> Ekspor Excel
+          </button>
+          <button className="btn-ghost" onClick={() => window.print()}>
+            <Printer size={16} /> Cetak
+          </button>
+        </div>
       </div>
       <p className="muted">{config.description}</p>
 

@@ -442,6 +442,15 @@ textarea {
 }
 
 /* ---- Reports ---- */
+.report-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.report-actions .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 .report-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

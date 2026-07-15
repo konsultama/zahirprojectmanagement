@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom';
-import { LayoutGrid, Wallet, CalendarClock, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { LayoutGrid, Wallet, CalendarClock, ShieldCheck, AlertTriangle, Truck } from 'lucide-react';
 import { REPORTS } from './config';
 
-const ICONS: Record<string, typeof LayoutGrid> = { LayoutGrid, Wallet, CalendarClock, ShieldCheck, AlertTriangle };
+const ICONS: Record<string, typeof LayoutGrid> = {
+  LayoutGrid,
+  Wallet,
+  CalendarClock,
+  ShieldCheck,
+  AlertTriangle,
+  Truck,
+};
 
 export function ReportsLanding() {
   return (

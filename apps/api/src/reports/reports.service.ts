@@ -40,6 +40,8 @@ export class ReportsService {
         return this.qc(actor);
       case 'risk':
         return this.risk(actor);
+      case 'vendor':
+        return this.vendor(actor);
       default:
         throw new NotFoundException(`Laporan "${key}" tidak dikenali.`);
     }
@@ -185,6 +187,58 @@ export class ReportsService {
         totalItems: rows.reduce((s, r) => s + r.total, 0),
         totalPassed: rows.reduce((s, r) => s + r.passed, 0),
         totalFailed: rows.reduce((s, r) => s + r.failed, 0),
+      },
+    };
+  }
+
+  // 6) Kinerja Vendor (lintas proyek) — serapan biaya per vendor
+  private async vendor(actor?: RequestUser) {
+    const items = await this.prisma.wbsItem.findMany({
+      where: {
+        deletedAt: null,
+        vendorId: { not: null },
+        project: { deletedAt: null, ...this.scope(actor) },
+      },
+      select: {
+        projectId: true,
+        totalBudget: true,
+        vendor: { select: { id: true, name: true } },
+        execution: { select: { actualCost: true } },
+      },
+    });
+
+    const byVendor = new Map<
+      string,
+      { name: string; projects: Set<string>; itemCount: number; plan: number; actual: number }
+    >();
+    for (const it of items) {
+      if (!it.vendor) continue;
+      const acc =
+        byVendor.get(it.vendor.id) ?? { name: it.vendor.name, projects: new Set<string>(), itemCount: 0, plan: 0, actual: 0 };
+      acc.projects.add(it.projectId);
+      acc.itemCount += 1;
+      acc.plan += num(it.totalBudget);
+      acc.actual += num(it.execution?.actualCost);
+      byVendor.set(it.vendor.id, acc);
+    }
+
+    const rows = [...byVendor.values()]
+      .map((v) => ({
+        vendor: v.name,
+        projectCount: v.projects.size,
+        itemCount: v.itemCount,
+        plan: pct2(v.plan),
+        actual: pct2(v.actual),
+        variansPct: v.plan > 0 ? pct2(((v.actual - v.plan) / v.plan) * 100) : 0,
+      }))
+      .sort((a, b) => b.plan - a.plan);
+
+    return {
+      rows,
+      summary: {
+        vendorCount: rows.length,
+        totalPlan: rows.reduce((s, r) => s + r.plan, 0),
+        totalActual: rows.reduce((s, r) => s + r.actual, 0),
       },
     };
   }
