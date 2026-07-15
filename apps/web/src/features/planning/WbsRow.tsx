@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { Fragment, useEffect, useState } from 'react';
+import { ChevronDown, ChevronRight, Plus, Trash2, SlidersHorizontal } from 'lucide-react';
 import { formatRupiah } from '../../lib/format';
 import type { UpdateWbsPayload, WbsNode } from './types';
 
@@ -46,11 +46,16 @@ export function WbsRow({
   const [name, setName] = useState(node.name);
   const [qty, setQty] = useState(node.qty?.toString() ?? '');
   const [unit, setUnit] = useState(node.unitBudget?.toString() ?? '');
+  const [weight, setWeight] = useState(node.weightPct?.toString() ?? '');
+  const [notes, setNotes] = useState(node.notes ?? '');
+  const [showDetail, setShowDetail] = useState(false);
   useEffect(() => {
     setName(node.name);
     setQty(node.qty?.toString() ?? '');
     setUnit(node.unitBudget?.toString() ?? '');
-  }, [node.name, node.qty, node.unitBudget]);
+    setWeight(node.weightPct?.toString() ?? '');
+    setNotes(node.notes ?? '');
+  }, [node.name, node.qty, node.unitBudget, node.weightPct, node.notes]);
 
   const commit = (patch: UpdateWbsPayload) => {
     if (!editable) return;
@@ -60,6 +65,7 @@ export function WbsRow({
   const uomOptions = node.itemType === 'MATERIAL' ? UOM_MATERIAL : UOM_TASK;
 
   return (
+    <Fragment>
     <tr className={isGroup ? 'wbs-row group' : 'wbs-row'}>
       <td className="wbs-num" style={{ paddingLeft: `${depth * 18 + 8}px` }}>
         {hasChildren ? (
@@ -197,6 +203,13 @@ export function WbsRow({
         </select>
       </td>
       <td className="wbs-actions">
+        <button
+          className={showDetail ? 'row-icon active' : 'row-icon'}
+          title="Tanggal, bobot, catatan, QC"
+          onClick={() => setShowDetail((s) => !s)}
+        >
+          <SlidersHorizontal size={15} />
+        </button>
         {editable && (
           <>
             {node.level < 4 && (
@@ -211,5 +224,70 @@ export function WbsRow({
         )}
       </td>
     </tr>
+    {showDetail && (
+      <tr className="wbs-detail-row">
+        <td colSpan={11}>
+          <div className="wbs-detail">
+            <div className="field">
+              <label className="field-label">Tanggal Mulai</label>
+              <input
+                type="date"
+                value={node.startDate?.slice(0, 10) ?? ''}
+                disabled={!editable}
+                onChange={(e) => commit({ startDate: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label className="field-label">Tanggal Selesai</label>
+              <input
+                type="date"
+                value={node.endDate?.slice(0, 10) ?? ''}
+                disabled={!editable}
+                onChange={(e) => commit({ endDate: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label className="field-label">Bobot (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                placeholder="proporsional"
+                value={weight}
+                disabled={!editable}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setWeight(e.target.value)}
+                onBlur={() => {
+                  if (weight === '') return;
+                  const v = Number(weight);
+                  if (!Number.isNaN(v) && v !== (node.weightPct ?? 0)) commit({ weightPct: v });
+                }}
+              />
+            </div>
+            <label className="field wbs-qc">
+              <span className="field-label">Wajib QC</span>
+              <input
+                type="checkbox"
+                checked={node.isQcRequired}
+                disabled={!editable}
+                onChange={(e) => commit({ isQcRequired: e.target.checked })}
+              />
+            </label>
+            <div className="field wbs-notes">
+              <label className="field-label">Catatan</label>
+              <input
+                value={notes}
+                disabled={!editable}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setNotes(e.target.value)}
+                onBlur={() => notes !== (node.notes ?? '') && commit({ notes })}
+              />
+            </div>
+          </div>
+        </td>
+      </tr>
+    )}
+    </Fragment>
   );
 }

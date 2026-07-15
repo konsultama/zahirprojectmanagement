@@ -16,6 +16,7 @@ export interface WbsNode {
   qty: number | null;
   unitBudget: number | null;
   totalBudget: number;
+  weightPct: number | null;
   startDate: string | null;
   endDate: string | null;
   isQcRequired: boolean;
@@ -66,6 +67,7 @@ export interface UpdateWbsPayload {
   unitBudget?: number;
   startDate?: string;
   endDate?: string;
+  weightPct?: number;
   isQcRequired?: boolean;
   notes?: string;
   picId?: string;

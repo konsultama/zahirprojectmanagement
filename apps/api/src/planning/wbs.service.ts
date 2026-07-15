@@ -34,6 +34,7 @@ export interface WbsNode {
   qty: number | null;
   unitBudget: number | null;
   totalBudget: number;
+  weightPct: number | null;
   startDate: Date | null;
   endDate: Date | null;
   isQcRequired: boolean;
@@ -204,6 +205,7 @@ export class WbsService {
         qty: this.num(it.qty),
         unitBudget: this.num(it.unitBudget),
         totalBudget: Number(it.totalBudget),
+        weightPct: this.num(it.weightPct),
         startDate: it.startDate,
         endDate: it.endDate,
         isQcRequired: it.isQcRequired,
