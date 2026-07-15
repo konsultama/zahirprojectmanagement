@@ -16,6 +16,7 @@ function useExecMutation<TArgs>(projectId: string, fn: (a: TArgs) => Promise<Exe
     onSuccess: (data) => {
       qc.setQueryData(['executing', projectId], data);
       qc.invalidateQueries({ queryKey: ['project', projectId] });
+      qc.invalidateQueries({ queryKey: ['stages', projectId] });
     },
   });
 }

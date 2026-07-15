@@ -63,9 +63,13 @@ export class ExecutingService {
     // per-location budget-weighted progress
     const byLoc = new Map<string, { wsum: number; wprog: number }>();
     let actualCost = 0;
+    let anyStarted = false;
+    let allDone = leaves.length > 0;
     for (const leaf of leaves) {
       const exec = leaf.execution;
       if (!exec || exec.status === ExecutionStatus.CANCELLED) continue;
+      if (num(exec.progressPct) > 0 || exec.status !== ExecutionStatus.NOT_STARTED) anyStarted = true;
+      if (exec.status !== ExecutionStatus.DONE) allDone = false;
       actualCost += num(exec.actualCost);
       const budget = num(leaf.totalBudget);
       const prog = num(exec.progressPct);
@@ -89,6 +93,20 @@ export class ExecutingService {
     const progress = pct2(projectProgress);
     const cost = money(actualCost);
     await tx.project.update({ where: { id: projectId }, data: { progressPct: progress, actualCost: cost } });
+
+    // keep the Executing stage status in sync with realisation (shown in the header)
+    const stage = await tx.projectStage.findFirst({ where: { projectId, stageType: StageType.EXECUTING } });
+    if (stage) {
+      const status = allDone
+        ? StageStatus.APPROVED
+        : anyStarted
+          ? StageStatus.IN_PROGRESS
+          : StageStatus.NOT_STARTED;
+      if (stage.status !== status || Number(stage.completionPct) !== progress) {
+        await tx.projectStage.update({ where: { id: stage.id }, data: { status, completionPct: progress } });
+      }
+    }
+
     return { progress, actualCost: cost };
   }
 
