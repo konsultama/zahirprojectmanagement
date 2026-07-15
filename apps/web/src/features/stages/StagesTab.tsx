@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react';
 import { useStages } from './api';
 import { InitiatingPanel } from './InitiatingPanel';
 import { PlanningPanel } from '../planning/PlanningPanel';
+import { ExecutingPanel } from '../executing/ExecutingPanel';
 import { STAGE_META, STAGE_STATUS_META } from '../projects/statusConfig';
 import type { StageType } from '../../lib/types';
 
@@ -39,12 +40,12 @@ export function StagesTab({ projectId }: { projectId: string }) {
       <div className="stage-body">
         {active === 'INITIATING' && <InitiatingPanel projectId={projectId} />}
         {active === 'PLANNING' && <PlanningPanel projectId={projectId} />}
-        {active !== 'INITIATING' && active !== 'PLANNING' && (
+        {active === 'EXECUTING' && <ExecutingPanel projectId={projectId} />}
+        {(active === 'MONITORING' || active === 'CLOSING') && (
           <div className="card placeholder">
             <Lock size={32} strokeWidth={1.5} />
             <p>
-              Tahap <strong>{STAGE_META[active]}</strong> akan dibangun pada modul berikutnya (realisasi progres &
-              biaya / QC).
+              Tahap <strong>{STAGE_META[active]}</strong> akan dibangun pada modul berikutnya (QC / penutupan).
             </p>
           </div>
         )}
