@@ -154,27 +154,31 @@ export class MonitoringService {
   }
 
   private async updateStageCompletion(tx: Prisma.TransactionClient, projectId: string): Promise<void> {
-    const required = await tx.wbsItem.findMany({
-      where: { projectId, deletedAt: null, isQcRequired: true },
-      select: { qc: { select: { qcStatus: true } } },
-    });
     const stage = await tx.projectStage.findFirst({ where: { projectId, stageType: StageType.MONITORING } });
     if (!stage) return;
-    if (required.length === 0) {
-      await tx.projectStage.update({ where: { id: stage.id }, data: { status: StageStatus.IN_PROGRESS } });
-      return;
-    }
-    const resolved = required.filter(
-      (r) => r.qc && (r.qc.qcStatus === QcStatus.PASSED || r.qc.qcStatus === QcStatus.WAIVED),
-    ).length;
-    const pct = pct2((resolved / required.length) * 100);
-    await tx.projectStage.update({
-      where: { id: stage.id },
-      data: {
-        completionPct: pct,
-        status: pct >= 100 ? StageStatus.APPROVED : StageStatus.IN_PROGRESS,
-      },
+
+    // QC coverage across all active leaves (works whether or not rows are flagged Wajib QC)
+    const leaves = await tx.wbsItem.findMany({
+      where: { projectId, deletedAt: null, itemType: { not: WbsItemType.GROUP } },
+      select: { qc: { select: { qcStatus: true } }, execution: { select: { status: true } } },
     });
+    const active = leaves.filter((l) => l.execution?.status !== ExecutionStatus.CANCELLED);
+    const total = active.length;
+    const isResolved = (s?: QcStatus) => s === QcStatus.PASSED || s === QcStatus.WAIVED;
+    const passed = active.filter((l) => isResolved(l.qc?.qcStatus)).length;
+    const anyInspected = active.some((l) => l.qc && l.qc.qcStatus !== QcStatus.BELUM_DIPERIKSA);
+
+    const pct = total > 0 ? pct2((passed / total) * 100) : 0;
+    const status =
+      total > 0 && passed === total
+        ? StageStatus.APPROVED
+        : anyInspected
+          ? StageStatus.IN_PROGRESS
+          : StageStatus.NOT_STARTED;
+
+    if (stage.status !== status || Number(stage.completionPct) !== pct) {
+      await tx.projectStage.update({ where: { id: stage.id }, data: { status, completionPct: pct } });
+    }
   }
 
   // ---- control dashboard (§7.2.5 D) ------------------------------------
