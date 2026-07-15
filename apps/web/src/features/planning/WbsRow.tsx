@@ -110,6 +110,10 @@ export function WbsRow({
             onChange={(e) => setQty(e.target.value)}
             onBlur={() => {
               const v = qty === '' ? 0 : Number(qty);
+              if (Number.isNaN(v)) {
+                setQty(node.qty?.toString() ?? '');
+                return;
+              }
               if (v !== (node.qty ?? 0)) commit({ qty: v });
             }}
           />
@@ -128,6 +132,10 @@ export function WbsRow({
             onChange={(e) => setUnit(e.target.value)}
             onBlur={() => {
               const v = unit === '' ? 0 : Number(unit);
+              if (Number.isNaN(v)) {
+                setUnit(node.unitBudget?.toString() ?? '');
+                return;
+              }
               if (v !== (node.unitBudget ?? 0)) commit({ unitBudget: v });
             }}
           />

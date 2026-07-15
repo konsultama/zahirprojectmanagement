@@ -51,6 +51,7 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
     setInitialBudget(f.initialBudget != null ? String(f.initialBudget) : '');
     setEstimatedDays(f.estimatedDays != null ? String(f.estimatedDays) : '');
     setSponsorId(f.sponsorApproverId ?? '');
+    setSponsorLabel(f.sponsorApproverName ?? '');
     setDeliverables(f.deliverables.length ? f.deliverables : []);
     setStakeholders(f.stakeholders.length ? f.stakeholders : []);
   }, [data]);
@@ -144,17 +145,21 @@ export function InitiatingPanel({ projectId }: { projectId: string }) {
         </div>
         <div className="field span-2">
           <label className="field-label">Sponsor / Approver *</label>
-          <SearchSelect
-            value={sponsorId}
-            valueLabel={sponsorLabel || (data.form.sponsorApproverId === sponsorId ? sponsorLabel : '')}
-            placeholder={sponsorId ? 'Sponsor terpilih' : 'Cari user…'}
-            options={(users.data ?? []).map((u) => ({ id: u.id, name: u.name, sub: u.role }))}
-            onSearch={setSponsorQuery}
-            onSelect={(o) => {
-              setSponsorId(o.id);
-              setSponsorLabel(o.name);
-            }}
-          />
+          {canEdit ? (
+            <SearchSelect
+              value={sponsorId}
+              valueLabel={sponsorLabel}
+              placeholder="Cari user…"
+              options={(users.data ?? []).map((u) => ({ id: u.id, name: u.name, sub: u.role }))}
+              onSearch={setSponsorQuery}
+              onSelect={(o) => {
+                setSponsorId(o.id);
+                setSponsorLabel(o.name);
+              }}
+            />
+          ) : (
+            <input value={sponsorLabel || '—'} disabled />
+          )}
         </div>
 
         {/* Deliverables */}
@@ -344,7 +349,8 @@ function MiniList<T>({
                       type={c.type === 'date' ? 'date' : 'text'}
                       disabled={disabled}
                       placeholder={c.placeholder}
-                      value={String(cell(r, c.key) ?? '')}
+                      // date fields arrive as full ISO strings; the date input needs yyyy-mm-dd
+                      value={c.type === 'date' ? String(cell(r, c.key) ?? '').slice(0, 10) : String(cell(r, c.key) ?? '')}
                       onFocus={(e) => e.target.select()}
                       onChange={(e) => update(i, c.key, e.target.value)}
                     />

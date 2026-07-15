@@ -53,6 +53,7 @@ export interface InitiatingForm {
   initialBudget: number | null;
   estimatedDays: number | null;
   sponsorApproverId: string | null;
+  sponsorApproverName: string | null;
   deliverables: Deliverable[];
   stakeholders: Stakeholder[];
   initialRisks: InitialRisk[];

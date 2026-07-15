@@ -171,6 +171,10 @@ function ExecRow({
             onChange={(e) => setQty(e.target.value)}
             onBlur={() => {
               const v = qty === '' ? 0 : Number(qty);
+              if (Number.isNaN(v)) {
+                setQty(row.actualQty ? String(row.actualQty) : '');
+                return;
+              }
               if (v !== row.actualQty) onPatch({ actualQty: v });
             }}
           />
@@ -188,7 +192,13 @@ function ExecRow({
               onFocus={(e) => e.target.select()}
               onChange={(e) => setProg(e.target.value)}
               onBlur={() => {
-                const v = prog === '' ? 0 : Number(prog);
+                const raw = prog === '' ? 0 : Number(prog);
+                if (Number.isNaN(raw)) {
+                  setProg(String(row.progressPct));
+                  return;
+                }
+                const v = Math.max(0, Math.min(100, raw));
+                if (v !== raw) setProg(String(v));
                 if (v !== row.progressPct) onPatch({ progressPct: v });
               }}
             />

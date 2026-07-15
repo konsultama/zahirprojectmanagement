@@ -62,6 +62,9 @@ export class InitiatingService {
     }
 
     const missing = this.computeMissing(form, checklist);
+    const sponsor = form.sponsorApproverId
+      ? await this.prisma.user.findUnique({ where: { id: form.sponsorApproverId }, select: { name: true } })
+      : null;
     return {
       stage: {
         id: stage.id,
@@ -73,6 +76,7 @@ export class InitiatingService {
       form: {
         ...form,
         initialBudget: num(form.initialBudget),
+        sponsorApproverName: sponsor?.name ?? null,
         assumptions: (form.assumptions as string[] | null) ?? [],
         constraints: (form.constraints as string[] | null) ?? [],
       },
