@@ -8,6 +8,7 @@ import { STAGE_META, STAGE_STATUS_META, STATUS_META, REASON_REQUIRED } from './s
 import { formatDate, formatRupiah, daysUntil } from '../../lib/format';
 import { useChangeStatus, useDeleteProject, useProject } from './api';
 import { StagesTab } from '../stages/StagesTab';
+import { AuditTrail } from '../audit/AuditTrail';
 import type { ProjectStatus } from '../../lib/types';
 
 const TABS = ['Ringkasan', 'Lokasi', 'Tahapan', 'Dokumen', 'Riwayat'] as const;
@@ -218,10 +219,12 @@ export function ProjectDetail() {
 
       {tab === 'Tahapan' && <StagesTab projectId={p.id} />}
 
-      {(tab === 'Dokumen' || tab === 'Riwayat') && (
+      {tab === 'Riwayat' && <AuditTrail projectId={p.id} />}
+
+      {tab === 'Dokumen' && (
         <div className="card placeholder">
           <p>
-            Tab <strong>{tab}</strong> akan diisi oleh modul berikutnya (Dokumen Closing / Audit trail).
+            Kelengkapan dokumen dikelola di tab <strong>Tahapan → Closing</strong>.
           </p>
         </div>
       )}

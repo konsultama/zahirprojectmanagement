@@ -1338,6 +1338,57 @@ textarea {
   }
 }
 
+/* ---- Audit trail ---- */
+.audit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.audit-item {
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.audit-item:last-child {
+  border-bottom: none;
+}
+.audit-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+}
+.audit-body {
+  flex: 1;
+  min-width: 0;
+}
+.audit-line {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.audit-action {
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.audit-time {
+  margin-left: auto;
+  font-size: 0.8rem;
+}
+.audit-detail {
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+  word-break: break-word;
+}
+.audit-reason {
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+  color: var(--warn);
+}
+
 /* ---- Toast ---- */
 .toast-stack {
   position: fixed;
