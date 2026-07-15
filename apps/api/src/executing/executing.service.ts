@@ -197,20 +197,28 @@ export class ExecutingService {
 
     let isCompleted = dto.isCompleted ?? exec.isCompleted;
     if (dto.isCompleted === true) {
-      if (progressPct < 100 && !dto.reason) {
-        throw new BadRequestException('Menandai Selesai saat % < 100 memerlukan alasan.');
+      // Checking "Selesai" completes the row to 100% (§7.2.4 C). A reason is only
+      // required for deliberate early termination — i.e. the caller explicitly
+      // sends a % below 100 together with isCompleted.
+      if (dto.progressPct != null && dto.progressPct < 100) {
+        if (!dto.reason) throw new BadRequestException('Menandai Selesai saat % < 100 memerlukan alasan.');
+        progressPct = dto.progressPct;
+      } else {
+        progressPct = 100;
       }
-      if (dto.progressPct == null) progressPct = 100;
-    }
-    if (progressPct < 100 && dto.isCompleted == null) {
-      // editing progress below 100 clears completion
-      if (exec.isCompleted && progressPct < 100) isCompleted = false;
+    } else if (dto.isCompleted === false || (progressPct < 100 && exec.isCompleted)) {
+      // unchecking, or lowering progress below 100, clears completion
+      isCompleted = false;
     }
 
-    // derive status
+    // derive status from completion + progress unless explicitly set
     let status = dto.status ?? exec.status;
-    if (isCompleted) status = ExecutionStatus.DONE;
-    else if (progressPct > 0 && status === ExecutionStatus.NOT_STARTED) status = ExecutionStatus.IN_PROGRESS;
+    if (dto.status == null) {
+      if (isCompleted) status = ExecutionStatus.DONE;
+      else if (status !== ExecutionStatus.BLOCKED && status !== ExecutionStatus.CANCELLED) {
+        status = progressPct > 0 ? ExecutionStatus.IN_PROGRESS : ExecutionStatus.NOT_STARTED;
+      }
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.executionRecord.update({

@@ -140,13 +140,8 @@ function ExecRow({
   }, [row.actualQty, row.progressPct]);
 
   const onCheck = (checked: boolean) => {
-    if (checked && row.progressPct < 100) {
-      const reason = window.prompt('Tandai Selesai walau % < 100 memerlukan alasan:');
-      if (!reason) return;
-      onPatch({ isCompleted: true, reason }, 'Ditandai selesai');
-    } else {
-      onPatch({ isCompleted: checked }, checked ? 'Ditandai selesai' : 'Centang dilepas');
-    }
+    // Checking "Selesai" completes the row to 100% (§7.2.4 C) — no reason needed.
+    onPatch({ isCompleted: checked }, checked ? 'Ditandai selesai (100%)' : 'Centang dilepas');
   };
 
   return (
