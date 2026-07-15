@@ -62,7 +62,20 @@ async function main() {
   await prisma.projectLocation.deleteMany();
   await prisma.project.deleteMany();
   await prisma.contact.deleteMany();
+  await prisma.persona.deleteMany();
   await prisma.user.deleteMany();
+
+  // --- Persona (§5) dipetakan ke Role sistem ---
+  await prisma.persona.createMany({
+    data: [
+      { name: 'Andi', roleTitle: 'Project Manager', systemRole: Role.PM, mainNeed: 'Melihat status semua proyeknya, menyusun rencana, tahu lebih awal kalau ada yang melenceng' },
+      { name: 'Rina', roleTitle: 'Admin Proyek', systemRole: Role.ADMIN, mainNeed: 'Form yang cepat, tidak mengulang input yang sudah ada di rencana' },
+      { name: 'Bagus', roleTitle: 'Site Supervisor', systemRole: Role.SUPERVISOR, mainNeed: 'Update progres per kegiatan dari lokasi, tandai selesai' },
+      { name: 'Sari', roleTitle: 'QC / Pengawas', systemRole: Role.QC, mainNeed: 'Mengisi hasil pemeriksaan per kegiatan, menolak yang belum layak' },
+      { name: 'Dedi', roleTitle: 'Direktur / Manajemen', systemRole: Role.VIEWER, mainNeed: 'Dashboard ringkas: progres, serapan anggaran, proyek bermasalah' },
+      { name: 'Fitri', roleTitle: 'Finance', systemRole: Role.FINANCE, mainNeed: 'Melihat serapan anggaran & kasus overbudget beserta alasannya' },
+    ],
+  });
 
   // --- Users (nama fiktif, §12.11) ---
   const [admin, pm, supervisor, qc, finance, viewer] = await Promise.all([
