@@ -22,9 +22,36 @@ export interface EntityConfig {
   accent: string;
   columns: Column[];
   fields: Field[];
+  hidden?: boolean; // not shown on the Data Master landing (e.g. surfaced under Settings)
 }
 
+const SYSTEM_ROLES = ['ADMIN', 'PM', 'SUPERVISOR', 'QC', 'FINANCE', 'VIEWER'].map((r) => ({
+  value: r,
+  label: r,
+}));
+
 export const MASTER_ENTITIES: EntityConfig[] = [
+  {
+    key: 'persona',
+    label: 'Persona',
+    icon: 'UserCircle',
+    accent: 'rgba(46,179,236,0.15)',
+    hidden: true, // surfaced under Pengaturan, not Data Master
+    columns: [
+      { key: 'name', label: 'Nama' },
+      { key: 'roleTitle', label: 'Peran' },
+      { key: 'systemRole', label: 'Role Sistem' },
+      { key: 'mainNeed', label: 'Kebutuhan Utama' },
+      { key: 'isActive', label: 'Aktif', kind: 'boolean' },
+    ],
+    fields: [
+      { key: 'name', label: 'Nama Persona', type: 'text', required: true },
+      { key: 'roleTitle', label: 'Peran', type: 'text', required: true },
+      { key: 'systemRole', label: 'Role Sistem', type: 'select', options: SYSTEM_ROLES },
+      { key: 'mainNeed', label: 'Kebutuhan Utama', type: 'textarea' },
+      { key: 'isActive', label: 'Aktif', type: 'boolean' },
+    ],
+  },
   {
     key: 'contact',
     label: 'Data Kontak',

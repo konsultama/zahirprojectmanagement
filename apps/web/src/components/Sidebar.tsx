@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
   { label: 'Penjualan', icon: ShoppingCart, disabled: true },
   { label: 'Kas & Bank', icon: Wallet, disabled: true },
   { label: 'Laporan', icon: ChartColumn, disabled: true },
-  { label: 'Pengaturan', icon: Settings, disabled: true },
+  { label: 'Pengaturan', to: '/settings', icon: Settings },
 ];
 
 export function Sidebar({ collapsed }: { collapsed: boolean }) {

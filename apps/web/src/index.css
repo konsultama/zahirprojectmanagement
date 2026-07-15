@@ -1490,6 +1490,23 @@ textarea {
 .master-card-label {
   font-weight: 700;
   font-size: 1rem;
+  display: block;
+}
+.master-card-desc {
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 0.15rem;
+}
+.rbac-table th.center,
+.rbac-table td.center {
+  text-align: center;
+}
+.rbac-table td:first-child {
+  font-weight: 500;
+}
+.rbac-table input[type='checkbox'] {
+  width: auto;
+  cursor: pointer;
 }
 
 /* ---- Modal form (Zahir modalForm style) ---- */

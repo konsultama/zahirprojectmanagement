@@ -17,8 +17,17 @@ function cell(row: MasterRow, col: Column) {
   return v == null || v === '' ? '—' : String(v);
 }
 
-export function MasterList() {
-  const { entity = '' } = useParams();
+export function MasterList({
+  entityKey,
+  backTo = '/master',
+  backLabel = 'Data Master',
+}: {
+  entityKey?: string;
+  backTo?: string;
+  backLabel?: string;
+} = {}) {
+  const params = useParams();
+  const entity = entityKey ?? params.entity ?? '';
   const config = entityByKey(entity);
   const { currentUser } = useSession();
   const toast = useToast();
@@ -52,8 +61,8 @@ export function MasterList() {
     <div className="page">
       <div className="page-head">
         <div>
-          <Link to="/master" className="back-link">
-            <ChevronLeft size={16} /> Data Master
+          <Link to={backTo} className="back-link">
+            <ChevronLeft size={16} /> {backLabel}
           </Link>
           <h1>{config.label}</h1>
         </div>

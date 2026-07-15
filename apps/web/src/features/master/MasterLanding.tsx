@@ -11,7 +11,7 @@ export function MasterLanding() {
         <h1>Data Master</h1>
       </div>
       <div className="master-cards">
-        {MASTER_ENTITIES.map((e) => {
+        {MASTER_ENTITIES.filter((e) => !e.hidden).map((e) => {
           const Icon = ICONS[e.icon] ?? Boxes;
           return (
             <Link key={e.key} to={`/master/${e.key}`} className="master-card">

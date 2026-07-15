@@ -757,3 +757,34 @@ model Product {
   @@index([typeId])
   @@index([unitId])
 }
+
+// ============================================================================
+// PENGATURAN (Settings) — Persona (§5) & RBAC (§6)
+// ============================================================================
+
+/// Persona pengguna (§5) — deskriptif, dipetakan ke Role sistem.
+model Persona {
+  id         String    @id @default(cuid())
+  name       String
+  roleTitle  String // Peran, mis. "Project Manager"
+  systemRole Role? // Role sistem yang dipetakan
+  mainNeed   String? // Kebutuhan utama
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([deletedAt])
+}
+
+/// Matriks Peran & Hak Akses (§6) — dapat dikonfigurasi Admin.
+model RolePermission {
+  id            String   @id @default(cuid())
+  role          Role
+  permissionKey String
+  allowed       Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([role, permissionKey])
+  @@index([role])
+}

@@ -11,6 +11,7 @@ import { MonitoringModule } from './monitoring/monitoring.module';
 import { ClosingModule } from './closing/closing.module';
 import { AuditModule } from './audit/audit.module';
 import { MasterModule } from './master/master.module';
+import { SettingsModule } from './settings/settings.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { UsersModule } from './users/users.module';
 import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
@@ -28,6 +29,7 @@ import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
     ClosingModule,
     AuditModule,
     MasterModule,
+    SettingsModule,
     ContactsModule,
     UsersModule,
   ],

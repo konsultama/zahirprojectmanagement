@@ -61,6 +61,14 @@ export const MASTER_REGISTRY: Record<string, MasterConfig> = {
     search: ['code', 'name', 'address'],
     orderBy: { code: 'asc' },
   },
+  persona: {
+    delegate: 'persona',
+    label: 'Persona',
+    fields: { name: 'string', roleTitle: 'string', systemRole: 'enum', mainNeed: 'string', isActive: 'boolean' },
+    required: ['name', 'roleTitle'],
+    search: ['name', 'roleTitle'],
+    orderBy: { name: 'asc' },
+  },
   product: {
     delegate: 'product',
     label: 'Data Produk',

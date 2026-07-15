@@ -11,6 +11,8 @@ import { ProjectForm } from './features/projects/ProjectForm';
 import { ProjectDetail } from './features/projects/ProjectDetail';
 import { MasterLanding } from './features/master/MasterLanding';
 import { MasterList } from './features/master/MasterList';
+import { SettingsLanding } from './features/settings/SettingsLanding';
+import { RbacMatrix } from './features/settings/RbacMatrix';
 
 function initials(name?: string): string {
   if (!name) return '?';
@@ -98,6 +100,12 @@ export function App() {
                   <Route path="/projects/:id/edit" element={<ProjectForm />} />
                   <Route path="/master" element={<MasterLanding />} />
                   <Route path="/master/:entity" element={<MasterList />} />
+                  <Route path="/settings" element={<SettingsLanding />} />
+                  <Route
+                    path="/settings/persona"
+                    element={<MasterList entityKey="persona" backTo="/settings" backLabel="Pengaturan" />}
+                  />
+                  <Route path="/settings/rbac" element={<RbacMatrix />} />
                   <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />
                 </Routes>
               </main>
