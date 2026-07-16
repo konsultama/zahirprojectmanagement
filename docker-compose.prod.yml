@@ -34,7 +34,7 @@ services:
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_FROM: ${SMTP_FROM:-Zahir PM <no-reply@zahir.local>}
     volumes:
-      - proj_uploads:/app/apps/api/uploads
+      - proj_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy

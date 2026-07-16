@@ -50,6 +50,9 @@ importers:
       pdfkit:
         specifier: ^0.19.1
         version: 0.19.1
+      prisma:
+        specifier: ^5.20.0
+        version: 5.22.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -78,9 +81,6 @@ importers:
       '@types/pdfkit':
         specifier: ^0.17.6
         version: 0.17.6
-      prisma:
-        specifier: ^5.20.0
-        version: 5.22.0
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.20.1)(typescript@5.9.3)

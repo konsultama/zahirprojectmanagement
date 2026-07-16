@@ -14,10 +14,10 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 # pnpm 11 gates native build scripts (Prisma/esbuild/Nest) behind an approval
 # that onlyBuiltDependencies doesn't satisfy on a clean install — approve them
-# non-interactively so the engines/binaries actually build.
+# non-interactively, then skip the pre-run deps check so build/test don't
+# re-trigger the gate.
 RUN pnpm install --frozen-lockfile --filter @proj/api... || true
 RUN pnpm approve-builds --all
-# Skip the pre-run deps check (it would re-trigger the ignored-builds gate).
 RUN pnpm config set verify-deps-before-run false
 
 # Build
@@ -25,16 +25,22 @@ COPY apps/api ./apps/api
 RUN pnpm --filter @proj/api exec prisma generate \
  && pnpm --filter @proj/api build
 
-# ---- runtime ----
+# Prune to a self-contained prod bundle (drops devDeps: nest-cli, tsc, vitest…),
+# then regenerate the Prisma client into it (deploy re-installs deps fresh).
+RUN pnpm --filter @proj/api --prod --legacy deploy /prod \
+ && cd /prod && ./node_modules/.bin/prisma generate
+
+# ---- runtime (slim) ----
 FROM node:22-slim AS runtime
-RUN corepack enable \
- && apt-get update \
+RUN apt-get update \
  && apt-get install -y --no-install-recommends openssl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=build /app ./
-WORKDIR /app/apps/api
+COPY --from=build /prod/dist ./dist
+COPY --from=build /prod/prisma ./prisma
+COPY --from=build /prod/node_modules ./node_modules
+COPY --from=build /prod/package.json ./
 EXPOSE 3000
 # Apply pending migrations, then start. Never seeds (production data is real).
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/main.js"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && node dist/main.js"]
