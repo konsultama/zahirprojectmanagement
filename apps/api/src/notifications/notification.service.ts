@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Observable, Subject } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from './email.service';
 
 export interface NotifyData {
   type: string;
@@ -10,9 +11,32 @@ export interface NotifyData {
   projectId?: string;
 }
 
+/** Event types important enough to also send by email (§11). */
+const EMAIL_TYPES = new Set(['STAGE_REJECTED', 'QC_FAILED', 'OVERBUDGET', 'PROJECT_CLOSED']);
+
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly email: EmailService,
+  ) {}
+
+  /** For high-priority events, also email the recipients (never throws). */
+  private async maybeEmail(userIds: Iterable<string>, data: NotifyData): Promise<void> {
+    if (!EMAIL_TYPES.has(data.type)) return;
+    try {
+      const ids = [...userIds];
+      if (ids.length === 0) return;
+      const users = await this.prisma.user.findMany({
+        where: { id: { in: ids }, deletedAt: null, email: { not: '' } },
+        select: { email: true },
+      });
+      const emails = users.map((u) => u.email).filter((e): e is string => !!e);
+      if (emails.length > 0) await this.email.send(emails, `[Zahir PM] ${data.title}`, data.message);
+    } catch {
+      /* email is best-effort — never break the business op */
+    }
+  }
 
   /** Per-user "you have a new notification" signals for the SSE stream. */
   private readonly signals$ = new Subject<{ userId: string }>();
@@ -52,6 +76,7 @@ export class NotificationService {
         })),
       });
       this.signal(ids);
+      await this.maybeEmail(ids, data);
     } catch {
       /* notifications must never break the business op */
     }
@@ -97,6 +122,7 @@ export class NotificationService {
         })),
       });
       this.signal(ids);
+      await this.maybeEmail(ids, data);
     } catch {
       /* notifications must never break the business op */
     }
@@ -110,6 +136,7 @@ export class NotificationService {
         data: { userId, type: data.type, title: data.title, message: data.message, projectId: data.projectId ?? null },
       });
       this.signal([userId]);
+      await this.maybeEmail([userId], data);
     } catch {
       /* ignore */
     }
