@@ -53,6 +53,13 @@ export function absoluteFileUrl(url: string): string {
   return url.startsWith('http') ? url : `${BASE_URL}${url}`;
 }
 
+/** SSE URL for the notification stream. Token goes in the query (EventSource
+ * can't set an Authorization header). Returns null when not authenticated. */
+export function notificationStreamUrl(): string | null {
+  const token = getToken();
+  return token ? `${BASE_URL}/notifications/stream?token=${encodeURIComponent(token)}` : null;
+}
+
 /** Error carrying the API's message(s) so the UI can surface them (§12.2). */
 export class ApiError extends Error {
   status: number;

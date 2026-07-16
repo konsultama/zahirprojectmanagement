@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, CheckCheck } from 'lucide-react';
-import { apiGet, apiPatch, apiPost } from '../../lib/api';
+import { apiGet, apiPatch, apiPost, notificationStreamUrl } from '../../lib/api';
 
 interface Notification {
   id: string;
@@ -44,7 +44,7 @@ export function NotificationBell() {
   const count = useQuery({
     queryKey: ['notif-count'],
     queryFn: () => apiGet<{ unread: number }>('/notifications/unread-count'),
-    refetchInterval: 30000,
+    refetchInterval: 60000, // fallback poll; the SSE stream drives realtime updates
   });
   const list = useQuery({
     queryKey: ['notif-list'],
@@ -66,6 +66,19 @@ export function NotificationBell() {
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
+
+  // Realtime: refresh the badge (and open list) the moment a notification lands.
+  useEffect(() => {
+    const url = notificationStreamUrl();
+    if (!url || typeof EventSource === 'undefined') return;
+    const es = new EventSource(url);
+    const onNotif = () => {
+      qc.invalidateQueries({ queryKey: ['notif-count'] });
+      qc.invalidateQueries({ queryKey: ['notif-list'] });
+    };
+    es.addEventListener('notification', onNotif);
+    return () => es.close();
+  }, [qc]);
 
   const unread = count.data?.unread ?? 0;
 

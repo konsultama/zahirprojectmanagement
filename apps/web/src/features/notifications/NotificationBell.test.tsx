@@ -12,6 +12,7 @@ vi.mock('../../lib/api', () => ({
   apiGet: (...a: unknown[]) => apiGet(...a),
   apiPatch: (...a: unknown[]) => apiPatch(...a),
   apiPost: (...a: unknown[]) => apiPost(...a),
+  notificationStreamUrl: () => null, // no SSE in the test environment
 }));
 
 import { NotificationBell } from './NotificationBell';

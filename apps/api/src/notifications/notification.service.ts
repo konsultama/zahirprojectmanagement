@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import { Observable, Subject } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface NotifyData {
@@ -12,6 +13,23 @@ export interface NotifyData {
 @Injectable()
 export class NotificationService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Per-user "you have a new notification" signals for the SSE stream. */
+  private readonly signals$ = new Subject<{ userId: string }>();
+
+  /** Stream of refresh signals for one user (used by the SSE endpoint). */
+  streamFor(userId: string): Observable<{ userId: string }> {
+    return new Observable((subscriber) => {
+      const sub = this.signals$.subscribe((e) => {
+        if (e.userId === userId) subscriber.next(e);
+      });
+      return () => sub.unsubscribe();
+    });
+  }
+
+  private signal(userIds: Iterable<string>): void {
+    for (const userId of userIds) this.signals$.next({ userId });
+  }
 
   /** Notify a project's PIC + members (except the actor). Never throws. */
   async notifyProject(projectId: string, data: NotifyData, exceptUserId?: string): Promise<void> {
@@ -33,6 +51,7 @@ export class NotificationService {
           projectId: data.projectId ?? projectId,
         })),
       });
+      this.signal(ids);
     } catch {
       /* notifications must never break the business op */
     }
@@ -77,6 +96,7 @@ export class NotificationService {
           projectId: data.projectId ?? projectId,
         })),
       });
+      this.signal(ids);
     } catch {
       /* notifications must never break the business op */
     }
@@ -89,6 +109,7 @@ export class NotificationService {
       await this.prisma.notification.create({
         data: { userId, type: data.type, title: data.title, message: data.message, projectId: data.projectId ?? null },
       });
+      this.signal([userId]);
     } catch {
       /* ignore */
     }

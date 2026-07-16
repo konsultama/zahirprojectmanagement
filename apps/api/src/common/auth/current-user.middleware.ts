@@ -35,6 +35,14 @@ export class CurrentUserMiddleware implements NestMiddleware {
       return next();
     }
 
+    // Query-param token: EventSource (SSE) can't set an Authorization header.
+    const queryToken = typeof req.query.token === 'string' ? req.query.token : undefined;
+    if (queryToken) {
+      const user = await this.auth.resolveToken(queryToken);
+      if (user) req.user = { id: user.id, name: user.name, role: user.role };
+      return next();
+    }
+
     // dev fallback
     const userId = req.header('x-user-id');
     if (userId) {
