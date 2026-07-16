@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { PanelLeft, Search, LogOut } from 'lucide-react';
+import { PanelLeft, LogOut } from 'lucide-react';
 import { apiGet, type HealthResponse } from './lib/api';
 import { SessionProvider, useSession } from './session';
 import { ToastProvider } from './components/Toast';
 import { Sidebar } from './components/Sidebar';
 import { LoginPage } from './features/auth/LoginPage';
 import { NotificationBell } from './features/notifications/NotificationBell';
+import { GlobalSearch } from './features/search/GlobalSearch';
 import { ProjectList } from './features/projects/ProjectList';
 import { ProjectForm } from './features/projects/ProjectForm';
 import { ProjectDetail } from './features/projects/ProjectDetail';
@@ -46,10 +47,7 @@ function TopBar({ onToggle }: { onToggle: () => void }) {
         <button className="icon-btn" onClick={onToggle} aria-label="Toggle sidebar">
           <PanelLeft size={20} strokeWidth={2} />
         </button>
-        <div className="topbar-search">
-          <Search size={18} strokeWidth={2} />
-          <input placeholder="Pencarian…" />
-        </div>
+        <GlobalSearch />
       </div>
       <div className="topbar-right">
         <span className={`db-dot ${dbUp ? 'up' : 'down'}`} title={dbUp ? 'DB terhubung' : 'DB terputus'} />
