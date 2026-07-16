@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Patch, Post, Req, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { Role } from '@prisma/client';
 import { ChannelsService } from './channels.service';
 import { Roles } from '../common/auth/roles.decorator';
@@ -18,6 +18,9 @@ class WhatsappUpdateDto {
   @IsOptional() @IsString() phoneId?: string;
   @IsOptional() @IsString() recipient?: string;
   @IsOptional() @IsString() apiVersion?: string;
+}
+class RoutingDto {
+  @IsArray() @IsString({ each: true }) events!: string[];
 }
 
 const ip = (req: Request) => req.ip ?? req.socket?.remoteAddress ?? undefined;
@@ -60,5 +63,16 @@ export class ChannelsController {
   @Roles(Role.ADMIN)
   testWhatsapp() {
     return this.channels.testWhatsapp();
+  }
+
+  @Get('notifications')
+  @Roles(Role.ADMIN)
+  getRouting() {
+    return this.channels.getRouting();
+  }
+  @Patch('notifications')
+  @Roles(Role.ADMIN)
+  updateRouting(@Body() dto: RoutingDto, @CurrentUser() u: RequestUser | undefined, @Req() req: Request) {
+    return this.channels.updateRouting(dto.events, must(u), ip(req));
   }
 }

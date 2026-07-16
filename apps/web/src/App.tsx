@@ -20,6 +20,7 @@ import { GlobalAuditPage } from './features/audit/GlobalAuditPage';
 import { SmtpSettings } from './features/settings/SmtpSettings';
 import { TelegramSettings } from './features/settings/TelegramSettings';
 import { WhatsappSettings } from './features/settings/WhatsappSettings';
+import { NotificationRouting } from './features/settings/NotificationRouting';
 import { ReportsLanding } from './features/reports/ReportsLanding';
 import { ReportView } from './features/reports/ReportView';
 import { Dashboard } from './features/dashboard/Dashboard';
@@ -107,6 +108,7 @@ function AppShell() {
             <Route path="/settings/smtp" element={<SmtpSettings />} />
             <Route path="/settings/telegram" element={<TelegramSettings />} />
             <Route path="/settings/whatsapp" element={<WhatsappSettings />} />
+            <Route path="/settings/notifications" element={<NotificationRouting />} />
             <Route path="/reports" element={<ReportsLanding />} />
             <Route path="/reports/:key" element={<ReportView />} />
             <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />

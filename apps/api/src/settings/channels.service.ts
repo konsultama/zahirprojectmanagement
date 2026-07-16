@@ -4,6 +4,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
 import { TelegramService } from '../notifications/telegram.service';
 import { WhatsappService } from '../notifications/whatsapp.service';
+import {
+  NotificationService,
+  NOTIFY_EVENTS,
+  DEFAULT_EXTERNAL_EVENTS,
+} from '../notifications/notification.service';
 import { RequestUser } from '../common/auth/current-user.middleware';
 
 export interface TelegramDto {
@@ -26,7 +31,27 @@ export class ChannelsService {
     private readonly audit: AuditService,
     private readonly telegram: TelegramService,
     private readonly whatsapp: WhatsappService,
+    private readonly notifications: NotificationService,
   ) {}
+
+  // ---- Event routing (which events fan out to external channels) ----
+  async getRouting() {
+    const row = await this.prisma.appSetting.findUnique({ where: { key: 'notify.externalEvents' } });
+    const selected = row ? row.value.split(',').map((s) => s.trim()).filter(Boolean) : DEFAULT_EXTERNAL_EVENTS;
+    return { available: NOTIFY_EVENTS, selected };
+  }
+
+  async updateRouting(events: string[], actor: RequestUser, ip?: string) {
+    const valid = events.filter((e) => NOTIFY_EVENTS.some((n) => n.type === e));
+    await this.prisma.appSetting.upsert({
+      where: { key: 'notify.externalEvents' },
+      create: { key: 'notify.externalEvents', value: valid.join(',') },
+      update: { value: valid.join(',') },
+    });
+    this.notifications.invalidateEventCache();
+    await this.audit.log({ entityType: 'AppSetting', entityId: 'notify.externalEvents', action: AuditAction.UPDATE, actor, newValue: { events: valid }, ipAddress: ip });
+    return this.getRouting();
+  }
 
   private async read(prefix: string): Promise<Record<string, string>> {
     const rows = await this.prisma.appSetting.findMany({ where: { key: { startsWith: `${prefix}.` } } });

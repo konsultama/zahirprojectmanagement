@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { UserCircle, ShieldCheck, History, Mail, Send, MessageCircle } from 'lucide-react';
+import { UserCircle, ShieldCheck, History, Mail, Send, MessageCircle, BellRing } from 'lucide-react';
 import { useSession } from '../../session';
 
 const CARDS = [
@@ -9,6 +9,7 @@ const CARDS = [
   { to: '/settings/smtp', label: 'Email (SMTP)', icon: Mail, accent: 'rgba(245,107,59,0.15)', desc: 'Konfigurasi server email notifikasi', adminOnly: true },
   { to: '/settings/telegram', label: 'Notifikasi Telegram', icon: Send, accent: 'rgba(46,179,236,0.15)', desc: 'Kirim alert ke chat/grup Telegram', adminOnly: true },
   { to: '/settings/whatsapp', label: 'Notifikasi WhatsApp', icon: MessageCircle, accent: 'rgba(5,150,105,0.15)', desc: 'Kirim alert via WhatsApp Cloud API', adminOnly: true },
+  { to: '/settings/notifications', label: 'Routing Notifikasi', icon: BellRing, accent: 'rgba(233,80,68,0.15)', desc: 'Kejadian mana ke kanal eksternal', adminOnly: true },
 ];
 
 export function SettingsLanding() {

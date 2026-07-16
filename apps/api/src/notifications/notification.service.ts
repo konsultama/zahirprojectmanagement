@@ -13,8 +13,19 @@ export interface NotifyData {
   projectId?: string;
 }
 
-/** Event types important enough to also push to external channels (§11). */
-const EXTERNAL_TYPES = new Set(['STAGE_REJECTED', 'QC_FAILED', 'OVERBUDGET', 'PROJECT_CLOSED']);
+/** All event types that CAN be routed to external channels, with labels. */
+export const NOTIFY_EVENTS: { type: string; label: string }[] = [
+  { type: 'STAGE_APPROVED', label: 'Tahap disetujui' },
+  { type: 'STAGE_REJECTED', label: 'Tahap ditolak' },
+  { type: 'QC_FAILED', label: 'QC gagal' },
+  { type: 'OVERBUDGET', label: 'Planning overbudget' },
+  { type: 'PROJECT_CLOSED', label: 'Proyek ditutup' },
+];
+
+/** Default set dispatched to external channels when nothing is configured. */
+export const DEFAULT_EXTERNAL_EVENTS = ['STAGE_REJECTED', 'QC_FAILED', 'OVERBUDGET', 'PROJECT_CLOSED'];
+
+const EVENT_CACHE_TTL_MS = 30_000;
 
 @Injectable()
 export class NotificationService {
@@ -25,12 +36,34 @@ export class NotificationService {
     private readonly whatsapp: WhatsappService,
   ) {}
 
+  private eventCache: { at: number; set: Set<string> } | null = null;
+
+  /** Event types configured to fan out to external channels (cached, DB-backed). */
+  private async externalEvents(): Promise<Set<string>> {
+    const now = Date.now();
+    if (this.eventCache && now - this.eventCache.at < EVENT_CACHE_TTL_MS) return this.eventCache.set;
+    let set = new Set(DEFAULT_EXTERNAL_EVENTS);
+    try {
+      const row = await this.prisma.appSetting.findUnique({ where: { key: 'notify.externalEvents' } });
+      if (row) set = new Set(row.value.split(',').map((s) => s.trim()).filter(Boolean));
+    } catch {
+      /* fall back to defaults */
+    }
+    this.eventCache = { at: now, set };
+    return set;
+  }
+
+  /** Invalidate the routing cache (called when the setting changes). */
+  invalidateEventCache(): void {
+    this.eventCache = null;
+  }
+
   /**
-   * For high-priority events, also push to external channels (never throws):
-   * email each recipient, and broadcast once to the Telegram/WhatsApp channels.
+   * For configured high-priority events, also push to external channels (never
+   * throws): email each recipient, and broadcast once to Telegram/WhatsApp.
    */
   private async dispatchExternal(userIds: Iterable<string>, data: NotifyData): Promise<void> {
-    if (!EXTERNAL_TYPES.has(data.type)) return;
+    if (!(await this.externalEvents()).has(data.type)) return;
     try {
       const ids = [...userIds];
       // Email — one per recipient.
