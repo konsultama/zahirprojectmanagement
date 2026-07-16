@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Lock, Send, Check, X, Plus, Download, FileUp } from 'lucide-react';
-import { ApiError } from '../../lib/api';
+import { ApiError, downloadAuthedFile } from '../../lib/api';
 import { useToast } from '../../components/Toast';
 import { useSession } from '../../session';
 import { formatRupiah } from '../../lib/format';
@@ -197,8 +197,19 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
 
       {/* RAB import/export toolbar */}
       <div className="rab-toolbar">
+        <button
+          className="btn-ghost"
+          onClick={() =>
+            downloadAuthedFile(`/projects/${projectId}/planning/rab.xlsx`, `RAB-${projectId}.xlsx`).catch(() =>
+              toast.error('Gagal mengunduh Excel.'),
+            )
+          }
+          disabled={rows.length === 0}
+        >
+          <Download size={15} /> Ekspor Excel
+        </button>
         <button className="btn-ghost" onClick={() => downloadCsv(`rab-${projectId}.csv`, exportRabCsv(tree))} disabled={rows.length === 0}>
-          <Download size={15} /> Ekspor RAB (Excel)
+          <Download size={15} /> Ekspor CSV
         </button>
         {editable && (
           <button className="btn-ghost" onClick={() => setShowImport(true)}>

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditAction, Prisma, StageStatus, StageType, WbsItemType } from '@prisma/client';
+import * as ExcelJS from 'exceljs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
 import { RequestUser } from '../common/auth/current-user.middleware';
@@ -247,6 +248,79 @@ export class WbsService {
       },
       planningStatus: await this.planningStatus(projectId),
     };
+  }
+
+  // ---- Excel export -----------------------------------------------------
+
+  /** Build a formatted .xlsx workbook of the RAB (WBS + budget rollup). */
+  async exportXlsx(projectId: string): Promise<{ buffer: Buffer; filename: string }> {
+    const project = await this.getProject(projectId);
+    const { tree, summary } = await this.getTree(projectId);
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Zahir Project Management';
+    const ws = wb.addWorksheet('RAB');
+
+    // Title block
+    ws.mergeCells('A1:G1');
+    ws.getCell('A1').value = `RAB — ${project.code} · ${project.name}`;
+    ws.getCell('A1').font = { bold: true, size: 14 };
+
+    ws.columns = [
+      { key: 'wbs', width: 12 },
+      { key: 'name', width: 44 },
+      { key: 'uom', width: 8 },
+      { key: 'qty', width: 10 },
+      { key: 'unit', width: 16 },
+      { key: 'total', width: 18 },
+      { key: 'loc', width: 20 },
+    ];
+
+    const headerRow = ws.addRow(['No. WBS', 'Uraian', 'Satuan', 'Qty', 'Harga Satuan', 'Jumlah', 'Lokasi']);
+    headerRow.font = { bold: true };
+    headerRow.eachCell((c) => {
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF2F8' } };
+      c.border = { bottom: { style: 'thin', color: { argb: 'FFB0BEC5' } } };
+    });
+
+    const moneyFmt = '#,##0;[Red]-#,##0';
+    const walk = (nodes: WbsNode[]) => {
+      for (const n of nodes) {
+        const isGroup = n.itemType === WbsItemType.GROUP || n.children.length > 0;
+        const row = ws.addRow([
+          n.wbsNumber,
+          `${'    '.repeat(Math.max(0, n.level - 1))}${n.name}`,
+          isGroup ? '' : n.uom ?? '',
+          isGroup ? null : n.qty ?? null,
+          isGroup ? null : n.unitBudget ?? null,
+          n.totalBudget,
+          n.locationName ?? '',
+        ]);
+        row.getCell(4).numFmt = moneyFmt;
+        row.getCell(5).numFmt = moneyFmt;
+        row.getCell(6).numFmt = moneyFmt;
+        if (isGroup) row.font = { bold: true };
+        walk(n.children);
+      }
+    };
+    walk(tree);
+
+    // Totals
+    ws.addRow([]);
+    const totalRow = ws.addRow(['', 'TOTAL RENCANA', '', '', '', summary.totalPlan, '']);
+    totalRow.font = { bold: true };
+    totalRow.getCell(6).numFmt = moneyFmt;
+    totalRow.getCell(6).border = { top: { style: 'double' } };
+    if (summary.estimate != null) {
+      const est = ws.addRow(['', 'Estimasi Awal', '', '', '', summary.estimate, '']);
+      est.getCell(6).numFmt = moneyFmt;
+      const sel = ws.addRow(['', 'Selisih (Rencana − Estimasi)', '', '', '', summary.totalPlan - summary.estimate, '']);
+      sel.getCell(6).numFmt = moneyFmt;
+      sel.font = { color: { argb: summary.totalPlan > summary.estimate ? 'FFC0392B' : 'FF1E8449' } };
+    }
+
+    const buffer = Buffer.from(await wb.xlsx.writeBuffer());
+    return { buffer, filename: `RAB-${project.code}.xlsx` };
   }
 
   // ---- create -----------------------------------------------------------

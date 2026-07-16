@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { Role } from '@prisma/client';
 import { WbsService } from './wbs.service';
 import { PlanningService } from './planning.service';
@@ -25,6 +25,22 @@ export class PlanningController {
   @Get()
   getTree(@Param('projectId') projectId: string) {
     return this.wbs.getTree(projectId);
+  }
+
+  @Get('rab.xlsx')
+  async exportXlsx(
+    @Param('projectId') projectId: string,
+    @CurrentUser() u: RequestUser | undefined,
+    @Res() res: Response,
+  ) {
+    must(u);
+    const { buffer, filename } = await this.wbs.exportXlsx(projectId);
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
   }
 
   @Get('baselines')

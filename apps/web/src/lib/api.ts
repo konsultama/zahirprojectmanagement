@@ -60,6 +60,24 @@ export function notificationStreamUrl(): string | null {
   return token ? `${BASE_URL}/notifications/stream?token=${encodeURIComponent(token)}` : null;
 }
 
+/** Fetch a binary endpoint with auth and trigger a browser download. */
+export async function downloadAuthedFile(path: string, fallbackName: string): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new ApiError(res.status, ['Gagal mengunduh berkas.']);
+  const disposition = res.headers.get('content-disposition') ?? '';
+  const match = /filename="?([^"]+)"?/.exec(disposition);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = match?.[1] ?? fallbackName;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /** Error carrying the API's message(s) so the UI can surface them (§12.2). */
 export class ApiError extends Error {
   status: number;
