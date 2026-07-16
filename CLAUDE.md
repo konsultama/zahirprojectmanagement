@@ -58,7 +58,7 @@ DATABASE_URL=postgresql://adinugrohoirawan@localhost:5432/proj_db?schema=public
 - **Empty-string → non-nullable column = 500.** Sanitize on write: empty enum → omit, number → 0, boolean → false; default web selects to the first option.
 - **New relation → add the back-relation** on the other model or `prisma migrate` fails validation (e.g. `notifications Notification[]` on `User`).
 - **Specs must stay out of the Nest build.** `apps/api/tsconfig.json` excludes `src/**/*.spec.ts` so they don't land in `dist/`.
-- **Vitest versions differ by package:** api uses Vitest 4, web is pinned to **Vitest 2** (Vite 5 lacks the `./module-runner` export Vitest 4 needs). Don't bump web to 4 without upgrading Vite.
+- **One Vitest version across the workspace (v2).** Web needs Vitest 2 (Vite 5 lacks the `./module-runner` export Vitest 4 wants), and api is pinned to match. They must stay equal: `@testing-library/jest-dom/vitest` augments whichever `vitest` it resolves — a version split makes it patch a different `expect` than the web runner uses, and every `toBeInTheDocument` throws "Invalid Chai property". Bump both together (and only past 2 when Vite goes to 6+).
 
 ## Testing
 
