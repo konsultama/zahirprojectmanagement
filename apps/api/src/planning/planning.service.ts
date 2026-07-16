@@ -119,6 +119,21 @@ export class PlanningService {
         tx,
       );
     });
+
+    if (verdict.over) {
+      // Overbudget plans need Finance/Admin sign-off (§7.2.3 D) — make sure the
+      // approvers see it even if they aren't on the project team.
+      await this.notifications.notifyProjectAndRoles(
+        projectId,
+        [Role.FINANCE, Role.ADMIN],
+        {
+          type: 'OVERBUDGET',
+          title: 'Planning overbudget',
+          message: `RAB proyek ${project.code} melebihi anggaran dan menunggu persetujuan Finance/Admin.`,
+        },
+        actor.id,
+      );
+    }
     return this.wbs.getTree(projectId);
   }
 
