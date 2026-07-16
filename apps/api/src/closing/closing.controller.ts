@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { Role } from '@prisma/client';
 import { ClosingService } from './closing.service';
 import { CreateDocumentDto, EvaluationDto, MasterUpdateDto, UpdateDocumentDto } from './dto/closing.dto';
@@ -26,6 +26,18 @@ export class ClosingController {
   @Get('report')
   report(@Param('projectId') projectId: string) {
     return this.closing.report(projectId);
+  }
+
+  @Get('report.pdf')
+  async reportPdf(@Param('projectId') projectId: string, @CurrentUser() u: RequestUser | undefined, @Res() res: Response) {
+    must(u);
+    const { buffer, filename } = await this.closing.reportPdf(projectId);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
   }
 
   @Patch('documents/:id')

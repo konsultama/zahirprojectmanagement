@@ -1,5 +1,7 @@
-import { Printer, X } from 'lucide-react';
+import { Printer, Download, X } from 'lucide-react';
 import { formatDate, formatRupiah } from '../../lib/format';
+import { downloadAuthedFile } from '../../lib/api';
+import { useToast } from '../../components/Toast';
 import { useClosureReport } from './api';
 
 const DOC_STATUS: Record<string, string> = {
@@ -11,12 +13,23 @@ const DOC_STATUS: Record<string, string> = {
 
 export function ClosureReport({ projectId, onClose }: { projectId: string; onClose: () => void }) {
   const { data: r, isLoading } = useClosureReport(projectId, true);
+  const toast = useToast();
 
   return (
     <div className="report-overlay">
       <div className="report-toolbar no-print">
-        <button className="btn-primary" onClick={() => window.print()}>
-          <Printer size={16} /> Cetak / Unduh PDF
+        <button
+          className="btn-primary"
+          onClick={() =>
+            downloadAuthedFile(`/projects/${projectId}/closing/report.pdf`, `Laporan-Penutupan-${projectId}.pdf`).catch(() =>
+              toast.error('Gagal mengunduh PDF.'),
+            )
+          }
+        >
+          <Download size={16} /> Unduh PDF
+        </button>
+        <button className="btn-ghost" onClick={() => window.print()}>
+          <Printer size={16} /> Cetak
         </button>
         <button className="btn-ghost" onClick={onClose}>
           <X size={16} /> Tutup

@@ -11,6 +11,7 @@ import {
   StageType,
   WbsItemType,
 } from '@prisma/client';
+import PDFDocument from 'pdfkit';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
 import { NotificationService } from '../notifications/notification.service';
@@ -20,6 +21,9 @@ import { CreateDocumentDto, EvaluationDto, MasterUpdateDto, UpdateDocumentDto } 
 
 const num = (d: Prisma.Decimal | null | undefined): number => (d == null ? 0 : Number(d));
 const days = (a: Date, b: Date) => Math.round((b.getTime() - a.getTime()) / 86400000);
+const rupiah = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+const fmtDate = (d: Date | string | null) =>
+  d ? new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(d)) : '—';
 
 export interface Evaluation {
   lessonsLearned?: string;
@@ -377,5 +381,73 @@ export class ClosingService {
       evaluation: state.evaluation,
       approvedAt: closing.approvedAt,
     };
+  }
+
+  /** Render the closure report as a laid-out PDF (§7.2.6). */
+  async reportPdf(projectId: string): Promise<{ buffer: Buffer; filename: string }> {
+    const r = await this.report(projectId);
+    const doc = new PDFDocument({ size: 'A4', margin: 48 });
+    const chunks: Buffer[] = [];
+    doc.on('data', (c: Buffer) => chunks.push(c));
+    const done = new Promise<Buffer>((resolve) => doc.on('end', () => resolve(Buffer.concat(chunks))));
+
+    const ink = '#394D6F';
+    const muted = '#667085';
+    const left = doc.page.margins.left;
+    const right = doc.page.width - doc.page.margins.right;
+
+    // Header
+    doc.fillColor(ink).fontSize(18).font('Helvetica-Bold').text('Laporan Penutupan Proyek');
+    doc.moveDown(0.2);
+    doc.fontSize(11).font('Helvetica').fillColor(muted).text(`${r.project.code} · ${r.project.name}`);
+    doc.moveDown(0.1);
+    doc.fontSize(8).fillColor(muted).text(`Dibuat: ${fmtDate(r.generatedAt)}` + (r.approvedAt ? `  ·  Disetujui: ${fmtDate(r.approvedAt)}` : ''));
+    doc.moveTo(left, doc.y + 6).lineTo(right, doc.y + 6).strokeColor('#D0D5DD').stroke();
+    doc.moveDown(1);
+
+    const section = (title: string) => {
+      doc.moveDown(0.6).fillColor(ink).font('Helvetica-Bold').fontSize(12).text(title);
+      doc.moveDown(0.3).font('Helvetica').fontSize(10);
+    };
+    const kv = (label: string, value: string) => {
+      const y = doc.y;
+      doc.fillColor(muted).font('Helvetica').text(label, left, y, { width: 160 });
+      doc.fillColor(ink).font('Helvetica-Bold').text(value, left + 170, y, { width: right - left - 170 });
+      doc.font('Helvetica');
+    };
+
+    section('Informasi Proyek');
+    kv('Client', r.project.client ?? '—');
+    kv('Penanggung Jawab', r.project.pic ?? '—');
+    kv('Status', r.project.status);
+    kv('Periode Rencana', `${fmtDate(r.project.startDate)} — ${fmtDate(r.project.finishDate)}`);
+    kv('Selesai Aktual', fmtDate(r.project.actualFinishDate));
+    if (r.project.contractValue != null) kv('Nilai Kontrak', rupiah(r.project.contractValue));
+
+    section('Ringkasan Kinerja');
+    kv('Progres Akhir', `${r.summary.progressPct}%`);
+    kv('Anggaran Rencana', rupiah(r.summary.budget.plan));
+    kv('Realisasi Biaya', rupiah(r.summary.budget.actual));
+    kv('Selisih Anggaran', `${r.summary.budget.variance <= 0 ? '' : '+'}${rupiah(r.summary.budget.variance)}`);
+    kv('Jadwal', `Rencana ${r.summary.schedule.plannedDays} hr · Aktual ${r.summary.schedule.actualDays} hr (${r.summary.schedule.diffDays >= 0 ? '+' : ''}${r.summary.schedule.diffDays} hr)`);
+    kv('Temuan QC', String(r.summary.qcFindings));
+    kv('Risiko Terjadi', String(r.summary.risksOccurred));
+
+    section(`Dokumen Penutupan (${r.completeness.requiredDone}/${r.completeness.requiredTotal} wajib terverifikasi)`);
+    for (const d of r.documents) {
+      if (doc.y > doc.page.height - 90) doc.addPage();
+      const mark = d.status === 'TERVERIFIKASI' ? '[v]' : d.status === 'TIDAK_BERLAKU' ? '[-]' : '[ ]';
+      doc.fillColor(ink).fontSize(9).text(`${mark} ${d.name}${d.isRequired ? ' *' : ''}`, { continued: true });
+      doc.fillColor(muted).text(`   ${d.status}`);
+    }
+
+    if (r.evaluation.lessonsLearned) {
+      section('Lessons Learned');
+      doc.fillColor(ink).fontSize(10).text(r.evaluation.lessonsLearned, { width: right - left });
+    }
+
+    doc.end();
+    const buffer = await done;
+    return { buffer, filename: `Laporan-Penutupan-${r.project.code}.pdf` };
   }
 }
