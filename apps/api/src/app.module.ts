@@ -15,6 +15,7 @@ import { MasterModule } from './master/master.module';
 import { SettingsModule } from './settings/settings.module';
 import { ReportsModule } from './reports/reports.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { FilesModule } from './files/files.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { UsersModule } from './users/users.module';
 import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
@@ -36,6 +37,7 @@ import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
     SettingsModule,
     ReportsModule,
     DashboardModule,
+    FilesModule,
     ContactsModule,
     UsersModule,
   ],

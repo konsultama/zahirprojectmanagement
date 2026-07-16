@@ -68,6 +68,7 @@ export interface UpdateDocPayload {
   status?: DocumentStatus;
   documentNo?: string;
   documentDate?: string;
+  fileUrl?: string;
   waiverReason?: string;
   notes?: string;
 }

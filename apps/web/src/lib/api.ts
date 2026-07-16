@@ -26,6 +26,33 @@ export async function fetchMe(): Promise<AuthUser> {
   return apiGet<AuthUser>('/auth/me');
 }
 
+export interface UploadedFile {
+  url: string;
+  fileName: string;
+  size: number;
+  mimeType: string;
+}
+
+/** Upload a file via multipart (Content-Type is set by the browser). */
+export async function uploadFile(file: File): Promise<UploadedFile> {
+  const token = getToken();
+  const res = await fetch(`${BASE_URL}/files`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: (() => {
+      const fd = new FormData();
+      fd.append('file', file);
+      return fd;
+    })(),
+  });
+  return handle<UploadedFile>(res);
+}
+
+/** Absolute URL for a stored file path (e.g. "/files/xyz.pdf"). */
+export function absoluteFileUrl(url: string): string {
+  return url.startsWith('http') ? url : `${BASE_URL}${url}`;
+}
+
 /** Error carrying the API's message(s) so the UI can surface them (§12.2). */
 export class ApiError extends Error {
   status: number;

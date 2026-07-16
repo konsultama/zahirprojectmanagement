@@ -14,6 +14,7 @@ import {
   useUpdateDoc,
 } from './api';
 import { ClosureReport } from './ClosureReport';
+import { FileUpload } from '../../components/FileUpload';
 import type { DocumentStatus } from './types';
 
 const DOC_STATUS: { value: DocumentStatus; label: string }[] = [
@@ -122,6 +123,7 @@ export function ClosingPanel({ projectId }: { projectId: string }) {
                 <th>Status</th>
                 <th>No. Dokumen</th>
                 <th>Tanggal</th>
+                <th>File</th>
               </tr>
             </thead>
             <tbody>
@@ -164,6 +166,13 @@ export function ClosingPanel({ projectId }: { projectId: string }) {
                       defaultValue={d.documentDate?.slice(0, 10) ?? ''}
                       disabled={!canEdit}
                       onChange={(e) => run(() => updateDoc.mutateAsync({ id: d.id, documentDate: e.target.value }), 'Tersimpan')}
+                    />
+                  </td>
+                  <td>
+                    <FileUpload
+                      value={d.fileUrl}
+                      disabled={!canEdit}
+                      onUploaded={(url) => run(() => updateDoc.mutateAsync({ id: d.id, fileUrl: url }), 'File tersimpan')}
                     />
                   </td>
                 </tr>

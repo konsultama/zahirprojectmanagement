@@ -18,6 +18,9 @@ build/
 # Prisma
 apps/api/prisma/*.db
 
+# Uploaded files
+apps/api/uploads/
+
 # Logs
 *.log
 npm-debug.log*
