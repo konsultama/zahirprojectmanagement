@@ -57,11 +57,32 @@ export class ClosingService {
     }
   }
 
+  /**
+   * Admin-configurable closing document template (§7.2.6 B). Lazy-seeds the
+   * template table from the built-in defaults on first use, then returns the
+   * active rows in display order.
+   */
+  private async templateDocs(): Promise<{ name: string; isRequired: boolean }[]> {
+    const count = await this.prisma.closingDocTemplate.count({ where: { deletedAt: null } });
+    if (count === 0) {
+      await this.prisma.closingDocTemplate.createMany({
+        data: DEFAULT_CLOSING_DOCS.map((d, i) => ({ name: d.name, isRequired: d.isRequired, sortOrder: i + 1 })),
+      });
+    }
+    const rows = await this.prisma.closingDocTemplate.findMany({
+      where: { deletedAt: null, isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    // fall back to built-ins if an admin deactivated every row
+    return rows.length > 0 ? rows.map((r) => ({ name: r.name, isRequired: r.isRequired })) : DEFAULT_CLOSING_DOCS;
+  }
+
   private async ensureDocs(projectId: string): Promise<void> {
     const count = await this.prisma.projectDocument.count({ where: { projectId } });
     if (count === 0) {
+      const template = await this.templateDocs();
       await this.prisma.projectDocument.createMany({
-        data: DEFAULT_CLOSING_DOCS.map((d, i) => ({
+        data: template.map((d, i) => ({
           projectId,
           name: d.name,
           isRequired: d.isRequired,

@@ -202,6 +202,24 @@ export const MASTER_ENTITIES: EntityConfig[] = [
     ],
   },
   {
+    key: 'closing-doc-template',
+    label: 'Template Dokumen Closing',
+    icon: 'FileCheck',
+    accent: 'rgba(122,90,248,0.15)',
+    columns: [
+      { key: 'sortOrder', label: 'Urutan' },
+      { key: 'name', label: 'Nama Dokumen' },
+      { key: 'isRequired', label: 'Wajib', kind: 'boolean' },
+      { key: 'isActive', label: 'Aktif', kind: 'boolean' },
+    ],
+    fields: [
+      { key: 'name', label: 'Nama Dokumen', type: 'text', required: true },
+      { key: 'sortOrder', label: 'Urutan', type: 'number' },
+      { key: 'isRequired', label: 'Wajib', type: 'boolean' },
+      { key: 'isActive', label: 'Aktif', type: 'boolean' },
+    ],
+  },
+  {
     key: 'product-type',
     label: 'Product Type',
     icon: 'Tags',

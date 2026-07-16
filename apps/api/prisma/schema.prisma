@@ -809,6 +809,21 @@ model ChecklistTemplate {
   @@index([deletedAt, isActive])
 }
 
+/// Template dokumen penutupan (§7.2.6 B) — dapat dikonfigurasi Admin.
+/// Menjadi sumber daftar dokumen yang di-seed ke tiap proyek saat Closing dibuka.
+model ClosingDocTemplate {
+  id         String    @id @default(cuid())
+  name       String
+  isRequired Boolean   @default(true)
+  sortOrder  Int       @default(0)
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([deletedAt, isActive])
+}
+
 /// Notifikasi in-app (§11) — approval, QC gagal, overbudget.
 model Notification {
   id        String   @id @default(cuid())

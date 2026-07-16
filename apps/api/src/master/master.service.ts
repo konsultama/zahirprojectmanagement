@@ -51,8 +51,17 @@ export class MasterService {
     return out;
   }
 
+  /** Populate a table with its registry defaults the first time it is listed. */
+  private async ensureSeeded(cfg: MasterConfig): Promise<void> {
+    if (!cfg.seed?.length) return;
+    const delegate = this.delegate(cfg);
+    const count = await delegate.count({ where: { deletedAt: null } });
+    if (count === 0) await delegate.createMany({ data: cfg.seed });
+  }
+
   async list(entity: string, query: { page?: number; pageSize?: number; search?: string }) {
     const cfg = this.config(entity);
+    await this.ensureSeeded(cfg);
     const page = Math.max(1, Number(query.page) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(query.pageSize) || 25));
 

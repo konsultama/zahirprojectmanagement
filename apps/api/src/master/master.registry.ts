@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { DEFAULT_CLOSING_DOCS } from '../closing/closing.template';
 
 type FieldType = 'string' | 'number' | 'boolean' | 'enum';
 
@@ -14,6 +15,8 @@ export interface MasterConfig {
   /** Optional relation include for list/detail (display of referenced names). */
   include?: Prisma.ProductInclude | Record<string, unknown>;
   orderBy?: Record<string, 'asc' | 'desc'>;
+  /** Rows to lazy-seed on first list when the table is empty (defaults an admin can edit). */
+  seed?: Record<string, unknown>[];
 }
 
 /**
@@ -68,6 +71,15 @@ export const MASTER_REGISTRY: Record<string, MasterConfig> = {
     required: ['text'],
     search: ['text'],
     orderBy: { sortOrder: 'asc' },
+  },
+  'closing-doc-template': {
+    delegate: 'closingDocTemplate',
+    label: 'Template Dokumen Closing',
+    fields: { name: 'string', isRequired: 'boolean', sortOrder: 'number', isActive: 'boolean' },
+    required: ['name'],
+    search: ['name'],
+    orderBy: { sortOrder: 'asc' },
+    seed: DEFAULT_CLOSING_DOCS.map((d, i) => ({ name: d.name, isRequired: d.isRequired, sortOrder: i + 1 })),
   },
   persona: {
     delegate: 'persona',
