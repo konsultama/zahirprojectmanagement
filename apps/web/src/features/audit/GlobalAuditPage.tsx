@@ -131,19 +131,19 @@ export function GlobalAuditPage() {
       </div>
 
       <div className="toolbar">
-        <select value={projectId} onChange={(e) => { setProjectId(e.target.value); reset(); }}>
+        <select aria-label="Filter proyek" value={projectId} onChange={(e) => { setProjectId(e.target.value); reset(); }}>
           <option value="">Semua proyek</option>
           {(data?.projects ?? []).map((p) => (
             <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
           ))}
         </select>
-        <select value={entityType} onChange={(e) => { setEntityType(e.target.value); reset(); }}>
+        <select aria-label="Filter entitas" value={entityType} onChange={(e) => { setEntityType(e.target.value); reset(); }}>
           <option value="">Semua entitas</option>
           {(data?.entityTypes ?? []).map((t) => (
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
-        <select value={action} onChange={(e) => { setAction(e.target.value); reset(); }}>
+        <select aria-label="Filter aksi" value={action} onChange={(e) => { setAction(e.target.value); reset(); }}>
           <option value="">Semua aksi</option>
           {ACTIONS.map((a) => (
             <option key={a} value={a}>{ACTION_META[a]?.label ?? a}</option>
@@ -154,6 +154,7 @@ export function GlobalAuditPage() {
           style={{ display: 'flex', gap: '0.4rem' }}
         >
           <input
+            aria-label="Cari pelaku atau alasan"
             placeholder="Cari pelaku / alasan…"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}

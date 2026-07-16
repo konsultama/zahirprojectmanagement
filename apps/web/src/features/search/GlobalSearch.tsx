@@ -68,6 +68,7 @@ export function GlobalSearch() {
     <div className="topbar-search gsearch" ref={boxRef}>
       <Search size={18} strokeWidth={2} />
       <input
+        aria-label="Cari proyek"
         placeholder="Cari proyek (kode, nama, client)…"
         value={term}
         onChange={(e) => {

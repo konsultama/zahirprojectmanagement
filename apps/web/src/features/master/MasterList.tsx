@@ -74,7 +74,7 @@ export function MasterList({
       </div>
 
       <div className="toolbar">
-        <input className="search" placeholder="Cari…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+        <input className="search" aria-label="Cari data" placeholder="Cari…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
       </div>
 
       <div className="card table-wrap">
