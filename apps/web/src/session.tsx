@@ -1,96 +1,86 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { apiGet, getUserId, setUserId } from './lib/api';
-import type { Role, UserRef } from './lib/types';
+import { apiGet, clearToken, fetchMe, login as apiLogin, setToken, type AuthUser } from './lib/api';
 
 interface Persona {
   id: string;
   name: string;
   roleTitle: string;
-  systemRole: Role | null;
   userId: string | null;
+  systemRole: string | null;
 }
-
-/** A persona from master data, resolved to a user account for auth (x-user-id). */
-export interface PersonaOption {
-  personaId: string;
+export interface CurrentPersona {
   name: string;
   roleTitle: string;
-  userId: string;
-  role: Role;
 }
 
+type Status = 'loading' | 'authed' | 'anon';
+
 interface SessionCtx {
-  users: UserRef[];
-  personas: PersonaOption[];
-  currentUser: UserRef | null;
-  currentPersona: PersonaOption | null;
-  switchUser: (id: string) => void;
+  status: Status;
+  currentUser: AuthUser | null;
+  currentPersona: CurrentPersona | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
 }
 
 const Ctx = createContext<SessionCtx>({
-  users: [],
-  personas: [],
+  status: 'loading',
   currentUser: null,
   currentPersona: null,
-  switchUser: () => {},
+  login: async () => {},
+  logout: () => {},
 });
 
-/**
- * MVP session: the "Masuk sebagai" switcher is driven by master Persona data
- * (§5). Each persona is mapped to a user account with the same system role;
- * that user's id goes out as `x-user-id`, driving RBAC and data-scope.
- */
+/** Auth-aware session backed by a JWT (Authorization: Bearer). */
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<UserRef[]>([]);
-  const [personaRows, setPersonaRows] = useState<Persona[]>([]);
-  const [currentId, setCurrentId] = useState<string | null>(getUserId());
+  const [status, setStatus] = useState<Status>('loading');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [personas, setPersonas] = useState<Persona[]>([]);
 
+  // restore session from stored token on load
   useEffect(() => {
-    Promise.all([
-      apiGet<UserRef[]>('/users').catch(() => [] as UserRef[]),
-      apiGet<{ data: Persona[] }>('/master/persona?pageSize=100')
-        .then((r) => r.data)
-        .catch(() => [] as Persona[]),
-    ]).then(([userList, personaList]) => {
-      setUsers(userList);
-      setPersonaRows(personaList);
-      if (!getUserId() && userList.length > 0) {
-        const admin = userList.find((u) => u.role === 'ADMIN') ?? userList[0];
-        setUserId(admin.id);
-        setCurrentId(admin.id);
-      }
-    });
+    fetchMe()
+      .then((u) => {
+        setCurrentUser(u);
+        setStatus('authed');
+      })
+      .catch(() => {
+        clearToken();
+        setStatus('anon');
+      });
   }, []);
 
+  // load personas (to label the current user) once authenticated
+  useEffect(() => {
+    if (status !== 'authed') return;
+    apiGet<{ data: Persona[] }>('/master/persona?pageSize=100')
+      .then((r) => setPersonas(r.data))
+      .catch(() => setPersonas([]));
+  }, [status]);
+
   const value = useMemo<SessionCtx>(() => {
-    // map each persona to a user with the same system role
-    const personas: PersonaOption[] = personaRows
-      .map((p) => {
-        // prefer the explicit linked user; fall back to matching by system role
-        const user = (p.userId ? users.find((u) => u.id === p.userId) : undefined) ??
-          (p.systemRole ? users.find((u) => u.role === p.systemRole) : undefined);
-        return user
-          ? { personaId: p.id, name: p.name, roleTitle: p.roleTitle, userId: user.id, role: user.role as Role }
-          : null;
-      })
-      .filter((x): x is PersonaOption => x !== null);
-
-    const currentUser = users.find((u) => u.id === currentId) ?? null;
-    const currentPersona =
-      personas.find((p) => p.userId === currentId) ??
-      (currentUser ? personas.find((p) => p.role === currentUser.role) ?? null : null);
-
+    const persona =
+      currentUser &&
+      (personas.find((p) => p.userId === currentUser.id) ??
+        personas.find((p) => p.systemRole === currentUser.role));
     return {
-      users,
-      personas,
+      status,
       currentUser,
-      currentPersona,
-      switchUser: (id: string) => {
-        setUserId(id);
-        setCurrentId(id);
+      currentPersona: persona ? { name: persona.name, roleTitle: persona.roleTitle } : null,
+      login: async (email, password) => {
+        const { token, user } = await apiLogin(email, password);
+        setToken(token);
+        setCurrentUser(user);
+        setStatus('authed');
+      },
+      logout: () => {
+        clearToken();
+        setCurrentUser(null);
+        setPersonas([]);
+        setStatus('anon');
       },
     };
-  }, [users, personaRows, currentId]);
+  }, [status, currentUser, personas]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -196,13 +196,74 @@ a:hover {
 .db-dot.down {
   background: var(--danger);
 }
-.user-switch select {
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 0.4rem 0.6rem;
-  color: var(--ink);
-  background: #fff;
+.user-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+.user-name {
+  font-weight: 600;
   font-size: 0.85rem;
+}
+.user-role {
+  font-size: 0.72rem;
+}
+
+/* ---- Login ---- */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--content-bg);
+  padding: 1.5rem;
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 40px rgba(16, 24, 40, 0.1);
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+.login-card h1 {
+  font-size: 1.4rem;
+  margin: 0 0 1.25rem;
+}
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+.login-demo {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.login-demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.login-demo-grid .btn-ghost {
+  font-size: 0.82rem;
+  padding: 0.45rem 0.6rem;
 }
 .avatar {
   width: 38px;

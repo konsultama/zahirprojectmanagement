@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
+import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
 import { ProjectsModule } from './projects/projects.module';
 import { StagesModule } from './stages/stages.module';
@@ -22,6 +23,7 @@ import { CurrentUserMiddleware } from './common/auth/current-user.middleware';
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     CommonModule,
+    AuthModule,
     ProjectsModule,
     StagesModule,
     PlanningModule,

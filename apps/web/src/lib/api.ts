@@ -1,12 +1,29 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api';
 
-const USER_KEY = 'proj.userId';
+const TOKEN_KEY = 'proj.token';
 
-export function getUserId(): string | null {
-  return localStorage.getItem(USER_KEY);
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
 }
-export function setUserId(id: string): void {
-  localStorage.setItem(USER_KEY, id);
+export function setToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email?: string;
+  role: string;
+}
+
+export async function login(email: string, password: string): Promise<{ token: string; user: AuthUser }> {
+  return apiPost<{ token: string; user: AuthUser }>('/auth/login', { email, password });
+}
+export async function fetchMe(): Promise<AuthUser> {
+  return apiGet<AuthUser>('/auth/me');
 }
 
 /** Error carrying the API's message(s) so the UI can surface them (§12.2). */
@@ -22,8 +39,8 @@ export class ApiError extends Error {
 
 function headers(): HeadersInit {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  const uid = getUserId();
-  if (uid) h['x-user-id'] = uid;
+  const token = getToken();
+  if (token) h['Authorization'] = `Bearer ${token}`;
   return h;
 }
 

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { PanelLeft, Bell, Search, LayoutDashboard } from 'lucide-react';
+import { PanelLeft, Bell, Search, LayoutDashboard, LogOut } from 'lucide-react';
 import { apiGet, type HealthResponse } from './lib/api';
 import { SessionProvider, useSession } from './session';
 import { ToastProvider } from './components/Toast';
 import { Sidebar } from './components/Sidebar';
+import { LoginPage } from './features/auth/LoginPage';
 import { ProjectList } from './features/projects/ProjectList';
 import { ProjectForm } from './features/projects/ProjectForm';
 import { ProjectDetail } from './features/projects/ProjectDetail';
@@ -26,9 +27,7 @@ function initials(name?: string): string {
 }
 
 function TopBar({ onToggle }: { onToggle: () => void }) {
-  const { users, personas, currentUser, currentPersona, switchUser } = useSession();
-  // prefer the persona-driven switcher; fall back to raw users if no personas
-  const usePersonas = personas.length > 0;
+  const { currentUser, currentPersona, logout } = useSession();
   const health = useQuery({
     queryKey: ['health'],
     queryFn: () => apiGet<HealthResponse>('/health'),
@@ -36,6 +35,8 @@ function TopBar({ onToggle }: { onToggle: () => void }) {
     refetchInterval: 30000,
   });
   const dbUp = health.data?.db === 'up';
+  const displayName = currentPersona?.name ?? currentUser?.name;
+  const displayRole = currentPersona?.roleTitle ?? currentUser?.role;
 
   return (
     <header className="topbar">
@@ -53,25 +54,16 @@ function TopBar({ onToggle }: { onToggle: () => void }) {
         <button className="icon-btn" aria-label="Notifikasi">
           <Bell size={22} strokeWidth={2} />
         </button>
-        <label className="user-switch">
-          <span className="muted user-switch-label">Masuk sebagai</span>
-          <select value={currentUser?.id ?? ''} onChange={(e) => switchUser(e.target.value)} aria-label="Masuk sebagai">
-            {usePersonas
-              ? personas.map((p) => (
-                  <option key={p.personaId} value={p.userId}>
-                    {p.name} — {p.roleTitle}
-                  </option>
-                ))
-              : users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} · {u.role}
-                  </option>
-                ))}
-          </select>
-        </label>
-        <div className="avatar" title={currentPersona ? `${currentPersona.name} — ${currentPersona.roleTitle}` : currentUser?.name}>
-          {initials(currentPersona?.name ?? currentUser?.name)}
+        <div className="user-box">
+          <span className="user-name">{displayName}</span>
+          <span className="user-role muted">{displayRole}</span>
         </div>
+        <div className="avatar" title={displayName}>
+          {initials(displayName)}
+        </div>
+        <button className="icon-btn" onClick={logout} title="Keluar" aria-label="Keluar">
+          <LogOut size={20} strokeWidth={2} />
+        </button>
       </div>
     </header>
   );
@@ -91,39 +83,54 @@ function DashboardPlaceholder() {
   );
 }
 
-export function App() {
+function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
+  const { status } = useSession();
+
+  if (status === 'loading') {
+    return <div className="login-wrap"><div className="muted">Memuat…</div></div>;
+  }
+  if (status === 'anon') {
+    return <LoginPage />;
+  }
+
+  return (
+    <div className={`shell ${collapsed ? 'shell-collapsed' : ''}`}>
+      <Sidebar collapsed={collapsed} />
+      <div className="shell-main">
+        <TopBar onToggle={() => setCollapsed((c) => !c)} />
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<Navigate to="/projects" replace />} />
+            <Route path="/dashboard" element={<DashboardPlaceholder />} />
+            <Route path="/projects" element={<ProjectList />} />
+            <Route path="/projects/new" element={<ProjectForm />} />
+            <Route path="/projects/:id" element={<ProjectDetail />} />
+            <Route path="/projects/:id/edit" element={<ProjectForm />} />
+            <Route path="/master" element={<MasterLanding />} />
+            <Route path="/master/:entity" element={<MasterList />} />
+            <Route path="/settings" element={<SettingsLanding />} />
+            <Route
+              path="/settings/persona"
+              element={<MasterList entityKey="persona" backTo="/settings" backLabel="Pengaturan" />}
+            />
+            <Route path="/settings/rbac" element={<RbacMatrix />} />
+            <Route path="/reports" element={<ReportsLanding />} />
+            <Route path="/reports/:key" element={<ReportView />} />
+            <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
         <SessionProvider>
-          <div className={`shell ${collapsed ? 'shell-collapsed' : ''}`}>
-            <Sidebar collapsed={collapsed} />
-            <div className="shell-main">
-              <TopBar onToggle={() => setCollapsed((c) => !c)} />
-              <main className="app-main">
-                <Routes>
-                  <Route path="/" element={<Navigate to="/projects" replace />} />
-                  <Route path="/dashboard" element={<DashboardPlaceholder />} />
-                  <Route path="/projects" element={<ProjectList />} />
-                  <Route path="/projects/new" element={<ProjectForm />} />
-                  <Route path="/projects/:id" element={<ProjectDetail />} />
-                  <Route path="/projects/:id/edit" element={<ProjectForm />} />
-                  <Route path="/master" element={<MasterLanding />} />
-                  <Route path="/master/:entity" element={<MasterList />} />
-                  <Route path="/settings" element={<SettingsLanding />} />
-                  <Route
-                    path="/settings/persona"
-                    element={<MasterList entityKey="persona" backTo="/settings" backLabel="Pengaturan" />}
-                  />
-                  <Route path="/settings/rbac" element={<RbacMatrix />} />
-                  <Route path="/reports" element={<ReportsLanding />} />
-                  <Route path="/reports/:key" element={<ReportView />} />
-                  <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />
-                </Routes>
-              </main>
-            </div>
-          </div>
+          <AppShell />
         </SessionProvider>
       </ToastProvider>
     </BrowserRouter>

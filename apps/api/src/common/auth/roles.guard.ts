@@ -30,7 +30,7 @@ export class RolesGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<Request>();
     const user = req.user;
     if (!user) {
-      throw new UnauthorizedException('Otentikasi diperlukan (header x-user-id tidak dikenali).');
+      throw new UnauthorizedException('Otentikasi diperlukan. Silakan masuk.');
     }
     if (!required.includes(user.role as Role)) {
       throw new ForbiddenException(

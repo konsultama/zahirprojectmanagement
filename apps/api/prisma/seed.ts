@@ -15,6 +15,7 @@ import {
   RiskStatus,
   ProjectMemberRole,
 } from '@prisma/client';
+import { hashPassword } from '../src/auth/jwt.util';
 
 const prisma = new PrismaClient();
 
@@ -80,14 +81,15 @@ async function main() {
   });
 
 
-  // --- Users (nama fiktif, §12.11) ---
+  // --- Users (nama fiktif, §12.11) — kata sandi demo: "zahir123" ---
+  const pwd = hashPassword('zahir123');
   const [admin, pm, supervisor, qc, finance, viewer] = await Promise.all([
-    prisma.user.create({ data: { name: 'Admin Sistem', email: 'admin@contoh.id', role: Role.ADMIN } }),
-    prisma.user.create({ data: { name: 'Andi Pratama', email: 'andi.pm@contoh.id', role: Role.PM } }),
-    prisma.user.create({ data: { name: 'Bagus Santoso', email: 'bagus.spv@contoh.id', role: Role.SUPERVISOR } }),
-    prisma.user.create({ data: { name: 'Sari Melati', email: 'sari.qc@contoh.id', role: Role.QC } }),
-    prisma.user.create({ data: { name: 'Fitri Handayani', email: 'fitri.fin@contoh.id', role: Role.FINANCE } }),
-    prisma.user.create({ data: { name: 'Dedi Kurniawan', email: 'dedi.dir@contoh.id', role: Role.VIEWER } }),
+    prisma.user.create({ data: { name: 'Admin Sistem', email: 'admin@contoh.id', role: Role.ADMIN, passwordHash: pwd } }),
+    prisma.user.create({ data: { name: 'Andi Pratama', email: 'andi.pm@contoh.id', role: Role.PM, passwordHash: pwd } }),
+    prisma.user.create({ data: { name: 'Bagus Santoso', email: 'bagus.spv@contoh.id', role: Role.SUPERVISOR, passwordHash: pwd } }),
+    prisma.user.create({ data: { name: 'Sari Melati', email: 'sari.qc@contoh.id', role: Role.QC, passwordHash: pwd } }),
+    prisma.user.create({ data: { name: 'Fitri Handayani', email: 'fitri.fin@contoh.id', role: Role.FINANCE, passwordHash: pwd } }),
+    prisma.user.create({ data: { name: 'Dedi Kurniawan', email: 'dedi.dir@contoh.id', role: Role.VIEWER, passwordHash: pwd } }),
   ]);
 
   // --- Persona (§5) ditautkan ke akun user (opsi "Masuk sebagai") ---
