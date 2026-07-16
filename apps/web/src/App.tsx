@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { PanelLeft, Bell, Search, LayoutDashboard, LogOut } from 'lucide-react';
+import { PanelLeft, Bell, Search, LogOut } from 'lucide-react';
 import { apiGet, type HealthResponse } from './lib/api';
 import { SessionProvider, useSession } from './session';
 import { ToastProvider } from './components/Toast';
@@ -16,6 +16,7 @@ import { SettingsLanding } from './features/settings/SettingsLanding';
 import { RbacMatrix } from './features/settings/RbacMatrix';
 import { ReportsLanding } from './features/reports/ReportsLanding';
 import { ReportView } from './features/reports/ReportView';
+import { Dashboard } from './features/dashboard/Dashboard';
 
 function initials(name?: string): string {
   if (!name) return '?';
@@ -69,20 +70,6 @@ function TopBar({ onToggle }: { onToggle: () => void }) {
   );
 }
 
-function DashboardPlaceholder() {
-  return (
-    <div className="page">
-      <div className="page-head">
-        <h1>Dasbor</h1>
-      </div>
-      <div className="card placeholder">
-        <LayoutDashboard size={40} strokeWidth={1.5} />
-        <p>Dasbor ringkas (progres & serapan anggaran seluruh proyek) menyusul. Buka menu Proyek untuk mulai.</p>
-      </div>
-    </div>
-  );
-}
-
 function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const { status } = useSession();
@@ -102,7 +89,7 @@ function AppShell() {
         <main className="app-main">
           <Routes>
             <Route path="/" element={<Navigate to="/projects" replace />} />
-            <Route path="/dashboard" element={<DashboardPlaceholder />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projects" element={<ProjectList />} />
             <Route path="/projects/new" element={<ProjectForm />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />

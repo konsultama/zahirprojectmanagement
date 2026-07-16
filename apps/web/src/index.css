@@ -502,6 +502,73 @@ textarea {
   white-space: nowrap;
 }
 
+/* ---- Dashboard (Dasbor) ---- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+.kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.kpi-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.kpi-body strong {
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 32px;
+  align-items: center;
+  gap: 0.6rem;
+}
+.breakdown-label {
+  font-size: 0.82rem;
+}
+.breakdown-bar-wrap {
+  background: #eef1f5;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+.breakdown-bar {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 3px;
+}
+.breakdown-val {
+  text-align: right;
+  font-size: 0.85rem;
+}
+.dash-ul li svg {
+  vertical-align: middle;
+  margin-right: 0.25rem;
+}
+
 /* ---- Reports ---- */
 .report-actions {
   display: flex;
