@@ -671,6 +671,9 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([projectId, createdAt])
   @@index([actorId])
+  // Global audit trail (§10) orders ALL rows by newest-first, paginated —
+  // the composite [projectId, createdAt] can't serve the no-project case.
+  @@index([createdAt])
 }
 
 // ============================================================================
