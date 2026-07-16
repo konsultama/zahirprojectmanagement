@@ -1,0 +1,54 @@
+# Production-like stack: Postgres + API + web (nginx).
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Web:  http://localhost:8080   ·   API (proxied):  http://localhost:8080/api/health
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: proj
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-proj_prod_password}
+      POSTGRES_DB: proj_db
+      TZ: Asia/Jakarta
+    volumes:
+      - proj_pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proj -d proj_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://proj:${POSTGRES_PASSWORD:-proj_prod_password}@postgres:5432/proj_db?schema=public
+      API_PORT: "3000"
+      API_PREFIX: api
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      # Optional email (dry-run if unset)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_FROM: ${SMTP_FROM:-Zahir PM <no-reply@zahir.local>}
+    volumes:
+      - proj_uploads:/app/apps/api/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+
+volumes:
+  proj_pgdata_prod:
+  proj_uploads:
