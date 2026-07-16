@@ -1,19 +1,23 @@
 import { Link } from 'react-router-dom';
-import { UserCircle, ShieldCheck } from 'lucide-react';
+import { UserCircle, ShieldCheck, History } from 'lucide-react';
+import { useSession } from '../../session';
 
 const CARDS = [
-  { to: '/settings/persona', label: 'Persona', icon: UserCircle, accent: 'rgba(46,179,236,0.15)', desc: 'Kelola persona pengguna (§5)' },
-  { to: '/settings/rbac', label: 'Peran & Hak Akses', icon: ShieldCheck, accent: 'rgba(5,150,105,0.15)', desc: 'Matriks RBAC per peran (§6)' },
+  { to: '/settings/persona', label: 'Persona', icon: UserCircle, accent: 'rgba(46,179,236,0.15)', desc: 'Kelola persona pengguna (§5)', adminOnly: false },
+  { to: '/settings/rbac', label: 'Peran & Hak Akses', icon: ShieldCheck, accent: 'rgba(5,150,105,0.15)', desc: 'Matriks RBAC per peran (§6)', adminOnly: false },
+  { to: '/settings/audit', label: 'Audit Trail Global', icon: History, accent: 'rgba(122,90,248,0.15)', desc: 'Riwayat aktivitas lintas proyek (§10)', adminOnly: true },
 ];
 
 export function SettingsLanding() {
+  const { currentUser } = useSession();
+  const cards = CARDS.filter((c) => !c.adminOnly || currentUser?.role === 'ADMIN');
   return (
     <div className="page">
       <div className="page-head">
         <h1>Pengaturan</h1>
       </div>
       <div className="master-cards">
-        {CARDS.map((c) => {
+        {cards.map((c) => {
           const Icon = c.icon;
           return (
             <Link key={c.to} to={c.to} className="master-card">
