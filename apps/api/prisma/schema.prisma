@@ -827,6 +827,14 @@ model ClosingDocTemplate {
   @@index([deletedAt, isActive])
 }
 
+/// Pengaturan aplikasi (key-value). Dipakai a.l. untuk konfigurasi SMTP yang
+/// dapat diubah Admin dari menu Pengaturan (menimpa variabel environment).
+model AppSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
 /// Notifikasi in-app (§11) — approval, QC gagal, overbudget.
 model Notification {
   id        String   @id @default(cuid())

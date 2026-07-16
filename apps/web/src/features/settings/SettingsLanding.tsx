@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { UserCircle, ShieldCheck, History } from 'lucide-react';
+import { UserCircle, ShieldCheck, History, Mail } from 'lucide-react';
 import { useSession } from '../../session';
 
 const CARDS = [
   { to: '/settings/persona', label: 'Persona', icon: UserCircle, accent: 'rgba(46,179,236,0.15)', desc: 'Kelola persona pengguna (§5)', adminOnly: false },
   { to: '/settings/rbac', label: 'Peran & Hak Akses', icon: ShieldCheck, accent: 'rgba(5,150,105,0.15)', desc: 'Matriks RBAC per peran (§6)', adminOnly: false },
   { to: '/settings/audit', label: 'Audit Trail Global', icon: History, accent: 'rgba(122,90,248,0.15)', desc: 'Riwayat aktivitas lintas proyek (§10)', adminOnly: true },
+  { to: '/settings/smtp', label: 'Email (SMTP)', icon: Mail, accent: 'rgba(245,107,59,0.15)', desc: 'Konfigurasi server email notifikasi', adminOnly: true },
 ];
 
 export function SettingsLanding() {

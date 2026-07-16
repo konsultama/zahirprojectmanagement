@@ -17,6 +17,7 @@ import { MasterList } from './features/master/MasterList';
 import { SettingsLanding } from './features/settings/SettingsLanding';
 import { RbacMatrix } from './features/settings/RbacMatrix';
 import { GlobalAuditPage } from './features/audit/GlobalAuditPage';
+import { SmtpSettings } from './features/settings/SmtpSettings';
 import { ReportsLanding } from './features/reports/ReportsLanding';
 import { ReportView } from './features/reports/ReportView';
 import { Dashboard } from './features/dashboard/Dashboard';
@@ -101,6 +102,7 @@ function AppShell() {
             />
             <Route path="/settings/rbac" element={<RbacMatrix />} />
             <Route path="/settings/audit" element={<GlobalAuditPage />} />
+            <Route path="/settings/smtp" element={<SmtpSettings />} />
             <Route path="/reports" element={<ReportsLanding />} />
             <Route path="/reports/:key" element={<ReportView />} />
             <Route path="*" element={<div className="page">Halaman tidak ditemukan.</div>} />
