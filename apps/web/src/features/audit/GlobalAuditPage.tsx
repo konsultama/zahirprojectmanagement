@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Download } from 'lucide-react';
 import { apiGet } from '../../lib/api';
 import { useSession } from '../../session';
 
@@ -51,6 +51,21 @@ function compact(v: unknown): string {
   return String(v);
 }
 
+interface ExportRow {
+  createdAt: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  project: string;
+  actor: string;
+  actorRole: string;
+  reason: string;
+  changes: string;
+  ipAddress: string;
+}
+const CSV_HEADER = ['Waktu', 'Aksi', 'Entitas', 'ID Entitas', 'Proyek', 'Pelaku', 'Peran', 'Alasan', 'Perubahan', 'IP'];
+const csvEsc = (s: string) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+
 export function GlobalAuditPage() {
   const { currentUser } = useSession();
   const [page, setPage] = useState(1);
@@ -71,6 +86,34 @@ export function GlobalAuditPage() {
     queryFn: () => apiGet<GlobalAuditResponse>(`/audit?${params.toString()}`),
     enabled: currentUser?.role === 'ADMIN',
   });
+
+  const [exporting, setExporting] = useState(false);
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const exp = new URLSearchParams();
+      if (entityType) exp.set('entityType', entityType);
+      if (action) exp.set('action', action);
+      if (projectId) exp.set('projectId', projectId);
+      if (search) exp.set('search', search);
+      const res = await apiGet<{ data: ExportRow[]; capped: boolean }>(`/audit/export?${exp.toString()}`);
+      const lines = res.data.map((r) =>
+        [
+          fmtTime(r.createdAt), r.action, r.entityType, r.entityId, r.project,
+          r.actor, r.actorRole, r.reason, r.changes, r.ipAddress,
+        ].map((c) => csvEsc(String(c ?? ''))).join(','),
+      );
+      const csv = '﻿' + [CSV_HEADER.join(','), ...lines].join('\n'); // BOM for Excel UTF-8
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (currentUser?.role !== 'ADMIN') {
     return <div className="page"><p className="muted">Halaman ini hanya untuk Admin.</p></div>;
@@ -118,6 +161,9 @@ export function GlobalAuditPage() {
           <button type="submit" className="btn-ghost">Cari</button>
         </form>
         <span className="muted" style={{ marginLeft: 'auto', alignSelf: 'center' }}>{data?.total ?? 0} entri</span>
+        <button className="btn-ghost" onClick={exportCsv} disabled={exporting || !data?.total}>
+          <Download size={16} /> {exporting ? 'Mengekspor…' : 'Ekspor CSV'}
+        </button>
       </div>
 
       <div className="card audit-list">

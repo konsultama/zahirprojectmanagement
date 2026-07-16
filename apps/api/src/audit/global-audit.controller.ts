@@ -20,9 +20,7 @@ class ListGlobalAuditDto {
 export class GlobalAuditController {
   constructor(private readonly prisma: PrismaService) {}
 
-  @Get()
-  @Roles(Role.ADMIN)
-  async list(@Query() q: ListGlobalAuditDto) {
+  private buildWhere(q: ListGlobalAuditDto): Prisma.AuditLogWhereInput {
     const where: Prisma.AuditLogWhereInput = {};
     if (q.entityType) where.entityType = q.entityType;
     if (q.action && q.action in AuditAction) where.action = q.action as AuditAction;
@@ -34,6 +32,43 @@ export class GlobalAuditController {
         { actor: { is: { name: { contains: s, mode: 'insensitive' } } } },
       ];
     }
+    return where;
+  }
+
+  /** All matching rows (capped) for CSV export — same filters, no pagination. */
+  @Get('export')
+  @Roles(Role.ADMIN)
+  async export(@Query() q: ListGlobalAuditDto) {
+    const rows = await this.prisma.auditLog.findMany({
+      where: this.buildWhere(q),
+      orderBy: { createdAt: 'desc' },
+      take: 5000,
+      include: {
+        actor: { select: { name: true, role: true } },
+        project: { select: { code: true, name: true } },
+      },
+    });
+    return {
+      data: rows.map((r) => ({
+        createdAt: r.createdAt,
+        action: r.action,
+        entityType: r.entityType,
+        entityId: r.entityId,
+        project: r.project ? `${r.project.code} — ${r.project.name}` : '',
+        actor: r.actor?.name ?? 'Sistem',
+        actorRole: r.actor?.role ?? '',
+        reason: r.reason ?? '',
+        changes: r.newValue ? JSON.stringify(r.newValue) : '',
+        ipAddress: r.ipAddress ?? '',
+      })),
+      capped: rows.length >= 5000,
+    };
+  }
+
+  @Get()
+  @Roles(Role.ADMIN)
+  async list(@Query() q: ListGlobalAuditDto) {
+    const where = this.buildWhere(q);
 
     const [total, rows, entityTypeRows, projectRows] = await this.prisma.$transaction([
       this.prisma.auditLog.count({ where }),
