@@ -16,7 +16,8 @@
     "db:seed": "pnpm --filter @proj/api prisma:seed",
     "db:studio": "pnpm --filter @proj/api prisma:studio",
     "lint": "pnpm --filter \"./apps/*\" lint",
-    "format": "prettier --write \"apps/**/*.{ts,tsx,json}\""
+    "format": "prettier --write \"apps/**/*.{ts,tsx,json}\"",
+    "test": "pnpm --filter \"./apps/*\" test"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
