@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { Role } from '@prisma/client';
 import { WbsService } from './wbs.service';
 import { PlanningService } from './planning.service';
-import { CreateWbsDto, OverbudgetDto, UpdateWbsDto } from './dto/wbs.dto';
+import { CreateWbsDto, ImportRabDto, OverbudgetDto, UpdateWbsDto } from './dto/wbs.dto';
 import { RejectDto } from '../stages/dto/initiating.dto';
 import { Permission } from '../common/auth/permission.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
@@ -36,6 +36,12 @@ export class PlanningController {
   @Permission('planning.compose')
   createRow(@Param('projectId') projectId: string, @Body() dto: CreateWbsDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.wbs.create(projectId, dto, must(u), ip(req));
+  }
+
+  @Post('import')
+  @Permission('planning.compose')
+  importRab(@Param('projectId') projectId: string, @Body() dto: ImportRabDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
+    return this.wbs.importRab(projectId, dto, must(u), ip(req));
   }
 
   @Patch('wbs/:id')

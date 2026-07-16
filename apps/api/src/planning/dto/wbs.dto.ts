@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNumber,
@@ -8,6 +10,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { WbsItemType } from '@prisma/client';
 
@@ -61,4 +64,24 @@ export class OverbudgetDto {
   @IsBoolean() allowOverbudget!: boolean;
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0) tolerancePct?: number;
   @IsOptional() @IsString() reason?: string;
+}
+
+export class ImportRabRowDto {
+  @IsString() wbsNumber!: string;
+  @IsString() @MinLength(1) name!: string;
+  @IsOptional() @IsString() itemType?: string; // TASK | MATERIAL (blank = group)
+  @IsOptional() @IsString() uom?: string;
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0) qty?: number;
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0) unitBudget?: number;
+  @IsOptional() @IsString() locationName?: string;
+}
+
+export class ImportRabDto {
+  @IsArray()
+  @ArrayMinSize(1, { message: 'Tidak ada baris untuk diimpor.' })
+  @ValidateNested({ each: true })
+  @Type(() => ImportRabRowDto)
+  rows!: ImportRabRowDto[];
+
+  @IsOptional() @IsBoolean() replace?: boolean;
 }

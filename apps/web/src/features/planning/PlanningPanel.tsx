@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Send, Check, X, Plus } from 'lucide-react';
+import { Lock, Send, Check, X, Plus, Download, FileUp } from 'lucide-react';
 import { ApiError } from '../../lib/api';
 import { useToast } from '../../components/Toast';
 import { useSession } from '../../session';
@@ -7,6 +7,8 @@ import { formatRupiah } from '../../lib/format';
 import { STAGE_STATUS_META } from '../projects/statusConfig';
 import { useContacts, useProject, useUsersSearch } from '../projects/api';
 import { WbsRow, type RowOption } from './WbsRow';
+import { RabImport } from './RabImport';
+import { exportRabCsv, downloadCsv } from './rabCsv';
 import {
   useApprovePlanning,
   useCreateWbs,
@@ -45,6 +47,7 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
   const [obReason, setObReason] = useState('');
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [showImport, setShowImport] = useState(false);
 
   if (isLoading || !data) return <div className="muted">Memuat RAB…</div>;
 
@@ -192,6 +195,18 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
         </div>
       )}
 
+      {/* RAB import/export toolbar */}
+      <div className="rab-toolbar">
+        <button className="btn-ghost" onClick={() => downloadCsv(`rab-${projectId}.csv`, exportRabCsv(tree))} disabled={rows.length === 0}>
+          <Download size={15} /> Ekspor RAB (Excel)
+        </button>
+        {editable && (
+          <button className="btn-ghost" onClick={() => setShowImport(true)}>
+            <FileUp size={15} /> Impor RAB
+          </button>
+        )}
+      </div>
+
       {/* WBS tree table */}
       <div className="card table-wrap">
         <table className="data-table wbs-table">
@@ -295,6 +310,8 @@ export function PlanningPanel({ projectId }: { projectId: string }) {
           </div>
         </div>
       )}
+
+      {showImport && <RabImport projectId={projectId} hasRows={rows.length > 0} onClose={() => setShowImport(false)} />}
     </div>
   );
 }

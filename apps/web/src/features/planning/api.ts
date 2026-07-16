@@ -70,3 +70,18 @@ export function useRejectPlanning(projectId: string) {
     apiPost<PlanningResponse>(`/projects/${projectId}/planning/reject`, { reason }),
   );
 }
+
+export interface ImportRabRow {
+  wbsNumber: string;
+  name: string;
+  itemType?: string;
+  uom?: string;
+  qty?: number;
+  unitBudget?: number;
+  locationName?: string;
+}
+export function useImportRab(projectId: string) {
+  return usePlanningMutation(projectId, (payload: { rows: ImportRabRow[]; replace?: boolean }) =>
+    apiPost<PlanningResponse>(`/projects/${projectId}/planning/import`, payload),
+  );
+}

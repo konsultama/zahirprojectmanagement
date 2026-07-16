@@ -3,7 +3,7 @@ import { AuditAction, Prisma, StageStatus, StageType, WbsItemType } from '@prism
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
 import { RequestUser } from '../common/auth/current-user.middleware';
-import { CreateWbsDto, UpdateWbsDto } from './dto/wbs.dto';
+import { CreateWbsDto, ImportRabDto, UpdateWbsDto } from './dto/wbs.dto';
 
 const MAX_DEPTH = 4;
 const money = (n: number) => Math.round(n * 100) / 100;
@@ -362,6 +362,92 @@ export class WbsService {
       await this.recompute(tx, projectId);
       await this.audit.log(
         { entityType: 'WbsItem', entityId: id, action: AuditAction.UPDATE, projectId, actor, reason: dto.reason ?? null, ipAddress: ip },
+        tx,
+      );
+    });
+    return this.getTree(projectId);
+  }
+
+  // ---- import RAB (§7.2.3 E) --------------------------------------------
+
+  private parentNumber(n: string): string | null {
+    return n.includes('.') ? n.slice(0, n.lastIndexOf('.')) : null;
+  }
+  private cmpWbs(a: string, b: string): number {
+    const pa = a.split('.').map(Number);
+    const pb = b.split('.').map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+      if (d !== 0) return d;
+    }
+    return 0;
+  }
+
+  async importRab(projectId: string, dto: ImportRabDto, actor: RequestUser, ip?: string) {
+    await this.getProject(projectId);
+    if ((await this.planningStatus(projectId)) === StageStatus.APPROVED) {
+      throw new BadRequestException('Planning sudah Approved — tidak bisa diimpor. Reject dulu bila perlu.');
+    }
+    const existing = await this.prisma.wbsItem.count({ where: { projectId, deletedAt: null } });
+    if (existing > 0 && !dto.replace) {
+      throw new BadRequestException(`RAB sudah berisi ${existing} baris. Aktifkan "ganti" untuk menimpa.`);
+    }
+
+    // validate
+    const numbers = new Set(dto.rows.map((r) => r.wbsNumber));
+    for (const r of dto.rows) {
+      if (!/^\d+(\.\d+)*$/.test(r.wbsNumber)) throw new BadRequestException(`No. WBS "${r.wbsNumber}" tidak valid.`);
+      if (r.wbsNumber.split('.').length > MAX_DEPTH) throw new BadRequestException(`No. WBS "${r.wbsNumber}" melebihi ${MAX_DEPTH} level.`);
+      const p = this.parentNumber(r.wbsNumber);
+      if (p && !numbers.has(p)) throw new BadRequestException(`Induk "${p}" untuk baris ${r.wbsNumber} tidak ada.`);
+    }
+
+    const locations = await this.prisma.projectLocation.findMany({ where: { projectId, deletedAt: null }, orderBy: { createdAt: 'asc' } });
+    if (locations.length === 0) throw new BadRequestException('Proyek belum punya lokasi.');
+    const locByName = new Map(locations.map((l) => [l.name.toLowerCase(), l.id]));
+    const defaultLoc = locations[0].id;
+
+    const sorted = [...dto.rows].sort((a, b) => this.cmpWbs(a.wbsNumber, b.wbsNumber));
+
+    await this.prisma.$transaction(async (tx) => {
+      if (existing > 0) {
+        await tx.wbsItem.updateMany({ where: { projectId, deletedAt: null }, data: { deletedAt: new Date() } });
+      }
+      const idByNum = new Map<string, string>();
+      const locByNum = new Map<string, string>();
+      let sort = 0;
+      for (const r of sorted) {
+        const parentNum = this.parentNumber(r.wbsNumber);
+        const parentId = parentNum ? idByNum.get(parentNum) ?? null : null;
+        const locId =
+          (r.locationName && locByName.get(r.locationName.toLowerCase())) ||
+          (parentNum ? locByNum.get(parentNum) : undefined) ||
+          defaultLoc;
+        const itemType = r.itemType?.toUpperCase() === 'MATERIAL' ? WbsItemType.MATERIAL : WbsItemType.TASK;
+        const qty = r.qty ?? null;
+        const unit = r.unitBudget ?? null;
+        const created = await tx.wbsItem.create({
+          data: {
+            projectId,
+            parentId,
+            locationId: locId,
+            wbsNumber: 'tmp',
+            level: r.wbsNumber.split('.').length,
+            sortOrder: ++sort,
+            name: r.name,
+            itemType,
+            uom: r.uom ?? null,
+            qty,
+            unitBudget: unit,
+            totalBudget: money((qty ?? 0) * (unit ?? 0)),
+          },
+        });
+        idByNum.set(r.wbsNumber, created.id);
+        locByNum.set(r.wbsNumber, locId);
+      }
+      await this.recompute(tx, projectId);
+      await this.audit.log(
+        { entityType: 'WbsItem', entityId: projectId, action: AuditAction.CREATE, projectId, actor, newValue: { imported: sorted.length }, ipAddress: ip },
         tx,
       );
     });
