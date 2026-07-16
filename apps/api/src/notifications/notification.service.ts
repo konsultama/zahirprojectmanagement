@@ -3,6 +3,8 @@ import { Role } from '@prisma/client';
 import { Observable, Subject } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
+import { TelegramService } from './telegram.service';
+import { WhatsappService } from './whatsapp.service';
 
 export interface NotifyData {
   type: string;
@@ -11,30 +13,40 @@ export interface NotifyData {
   projectId?: string;
 }
 
-/** Event types important enough to also send by email (§11). */
-const EMAIL_TYPES = new Set(['STAGE_REJECTED', 'QC_FAILED', 'OVERBUDGET', 'PROJECT_CLOSED']);
+/** Event types important enough to also push to external channels (§11). */
+const EXTERNAL_TYPES = new Set(['STAGE_REJECTED', 'QC_FAILED', 'OVERBUDGET', 'PROJECT_CLOSED']);
 
 @Injectable()
 export class NotificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly email: EmailService,
+    private readonly telegram: TelegramService,
+    private readonly whatsapp: WhatsappService,
   ) {}
 
-  /** For high-priority events, also email the recipients (never throws). */
-  private async maybeEmail(userIds: Iterable<string>, data: NotifyData): Promise<void> {
-    if (!EMAIL_TYPES.has(data.type)) return;
+  /**
+   * For high-priority events, also push to external channels (never throws):
+   * email each recipient, and broadcast once to the Telegram/WhatsApp channels.
+   */
+  private async dispatchExternal(userIds: Iterable<string>, data: NotifyData): Promise<void> {
+    if (!EXTERNAL_TYPES.has(data.type)) return;
     try {
       const ids = [...userIds];
-      if (ids.length === 0) return;
-      const users = await this.prisma.user.findMany({
-        where: { id: { in: ids }, deletedAt: null, email: { not: '' } },
-        select: { email: true },
-      });
-      const emails = users.map((u) => u.email).filter((e): e is string => !!e);
-      if (emails.length > 0) await this.email.send(emails, `[Zahir PM] ${data.title}`, data.message);
+      // Email — one per recipient.
+      if (ids.length > 0) {
+        const users = await this.prisma.user.findMany({
+          where: { id: { in: ids }, deletedAt: null, email: { not: '' } },
+          select: { email: true },
+        });
+        const emails = users.map((u) => u.email).filter((e): e is string => !!e);
+        if (emails.length > 0) await this.email.send(emails, `[Zahir PM] ${data.title}`, data.message);
+      }
+      // Telegram / WhatsApp — one broadcast to the configured channel.
+      const text = `🔔 ${data.title}\n${data.message}`;
+      await Promise.all([this.telegram.send(text), this.whatsapp.send(text)]);
     } catch {
-      /* email is best-effort — never break the business op */
+      /* external channels are best-effort — never break the business op */
     }
   }
 
@@ -76,7 +88,7 @@ export class NotificationService {
         })),
       });
       this.signal(ids);
-      await this.maybeEmail(ids, data);
+      await this.dispatchExternal(ids, data);
     } catch {
       /* notifications must never break the business op */
     }
@@ -122,7 +134,7 @@ export class NotificationService {
         })),
       });
       this.signal(ids);
-      await this.maybeEmail(ids, data);
+      await this.dispatchExternal(ids, data);
     } catch {
       /* notifications must never break the business op */
     }
@@ -136,7 +148,7 @@ export class NotificationService {
         data: { userId, type: data.type, title: data.title, message: data.message, projectId: data.projectId ?? null },
       });
       this.signal([userId]);
-      await this.maybeEmail([userId], data);
+      await this.dispatchExternal([userId], data);
     } catch {
       /* ignore */
     }
