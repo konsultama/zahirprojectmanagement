@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { AuditAction, ExecutionStatus, Prisma, QcStatus, Role, StageStatus, StageType, WbsItemType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
+import { NotificationService } from '../notifications/notification.service';
 import { RequestUser } from '../common/auth/current-user.middleware';
 import { UpdateQcDto } from './dto/monitoring.dto';
 
@@ -13,6 +14,7 @@ export class MonitoringService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private async getProject(projectId: string) {
@@ -149,6 +151,18 @@ export class MonitoringService {
         tx,
       );
     });
+
+    if (dto.qcStatus === QcStatus.FAILED) {
+      await this.notifications.notifyProject(
+        projectId,
+        {
+          type: 'QC_FAILED',
+          title: 'QC Gagal',
+          message: `Kegiatan "${leaf.wbsNumber} ${leaf.name}" gagal QC: ${dto.findings ?? ''}`.trim(),
+        },
+        actor.id,
+      );
+    }
 
     return this.qcList(projectId);
   }

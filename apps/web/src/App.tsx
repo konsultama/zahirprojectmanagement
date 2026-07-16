@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { PanelLeft, Bell, Search, LogOut } from 'lucide-react';
+import { PanelLeft, Search, LogOut } from 'lucide-react';
 import { apiGet, type HealthResponse } from './lib/api';
 import { SessionProvider, useSession } from './session';
 import { ToastProvider } from './components/Toast';
 import { Sidebar } from './components/Sidebar';
 import { LoginPage } from './features/auth/LoginPage';
+import { NotificationBell } from './features/notifications/NotificationBell';
 import { ProjectList } from './features/projects/ProjectList';
 import { ProjectForm } from './features/projects/ProjectForm';
 import { ProjectDetail } from './features/projects/ProjectDetail';
@@ -52,9 +53,7 @@ function TopBar({ onToggle }: { onToggle: () => void }) {
       </div>
       <div className="topbar-right">
         <span className={`db-dot ${dbUp ? 'up' : 'down'}`} title={dbUp ? 'DB terhubung' : 'DB terputus'} />
-        <button className="icon-btn" aria-label="Notifikasi">
-          <Bell size={22} strokeWidth={2} />
-        </button>
+        <NotificationBell />
         <div className="user-box">
           <span className="user-name">{displayName}</span>
           <span className="user-role muted">{displayRole}</span>

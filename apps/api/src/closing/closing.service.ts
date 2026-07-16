@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
+import { NotificationService } from '../notifications/notification.service';
 import { RequestUser } from '../common/auth/current-user.middleware';
 import { DEFAULT_CLOSING_DOCS } from './closing.template';
 import { CreateDocumentDto, EvaluationDto, MasterUpdateDto, UpdateDocumentDto } from './dto/closing.dto';
@@ -33,6 +34,7 @@ export class ClosingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private async getContext(projectId: string) {
@@ -308,6 +310,11 @@ export class ClosingService {
         tx,
       );
     });
+    await this.notifications.notifyProject(
+      projectId,
+      { type: 'PROJECT_CLOSED', title: 'Proyek ditutup', message: `Proyek ${project.code} ditutup (Closed) oleh ${actor.name}.` },
+      actor.id,
+    );
     return this.get(projectId);
   }
 
@@ -317,6 +324,11 @@ export class ClosingService {
     if (!reason?.trim()) throw new BadRequestException('Alasan penolakan wajib diisi.');
     await this.prisma.projectStage.update({ where: { id: closing.id }, data: { status: StageStatus.IN_PROGRESS, rejectionReason: reason } });
     await this.audit.log({ entityType: 'ProjectStage', entityId: closing.id, action: AuditAction.REJECT, projectId, actor, reason, ipAddress: ip });
+    await this.notifications.notifyProject(
+      projectId,
+      { type: 'STAGE_REJECTED', title: 'Closing ditolak', message: `Penutupan proyek ditolak: ${reason}` },
+      actor.id,
+    );
     return this.get(projectId);
   }
 

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AuditAction, Prisma, StageStatus, StageType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
+import { NotificationService } from '../notifications/notification.service';
 import { RequestUser } from '../common/auth/current-user.middleware';
 import { DEFAULT_INITIATING_CHECKLIST } from './initiating.template';
 import { ChecklistUpdateDto, RejectDto, SaveInitiatingDto } from './dto/initiating.dto';
@@ -13,6 +14,7 @@ export class InitiatingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private async getStage(projectId: string) {
@@ -292,6 +294,11 @@ export class InitiatingService {
         tx,
       );
     });
+    await this.notifications.notifyProject(
+      projectId,
+      { type: 'STAGE_APPROVED', title: 'Initiating disetujui', message: `Tahap Initiating disetujui oleh ${actor.name}.` },
+      actor.id,
+    );
     return this.get(projectId);
   }
 
@@ -311,6 +318,11 @@ export class InitiatingService {
         tx,
       );
     });
+    await this.notifications.notifyProject(
+      projectId,
+      { type: 'STAGE_REJECTED', title: 'Initiating ditolak', message: `Tahap Initiating ditolak: ${dto.reason}` },
+      actor.id,
+    );
     return this.get(projectId);
   }
 }

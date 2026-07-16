@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { AuditAction, Prisma, Role, StageStatus, StageType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../common/audit/audit.service';
+import { NotificationService } from '../notifications/notification.service';
 import { RequestUser } from '../common/auth/current-user.middleware';
 import { WbsService } from './wbs.service';
 import { OverbudgetDto } from './dto/wbs.dto';
@@ -14,6 +15,7 @@ export class PlanningService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly wbs: WbsService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private async getStages(projectId: string) {
@@ -173,6 +175,11 @@ export class PlanningService {
         tx,
       );
     });
+    await this.notifications.notifyProject(
+      projectId,
+      { type: 'STAGE_APPROVED', title: 'Planning disetujui', message: `RAB/Planning disetujui oleh ${actor.name}. Executing & Monitoring terbuka.` },
+      actor.id,
+    );
     return this.wbs.getTree(projectId);
   }
 
@@ -192,6 +199,11 @@ export class PlanningService {
         tx,
       );
     });
+    await this.notifications.notifyProject(
+      projectId,
+      { type: 'STAGE_REJECTED', title: 'Planning ditolak', message: `RAB/Planning ditolak: ${reason}` },
+      actor.id,
+    );
     return this.wbs.getTree(projectId);
   }
 
