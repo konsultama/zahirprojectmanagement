@@ -7,10 +7,31 @@ import { PERMISSIONS, ROLES, ROLE_LABELS } from './rbac.permissions';
 
 @Injectable()
 export class RbacService {
+  /** In-memory cache of the matrix (key `${role}:${permissionKey}` -> allowed). */
+  private cache: Map<string, boolean> | null = null;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
   ) {}
+
+  private async loadCache(): Promise<void> {
+    await this.ensureSeed();
+    const rows = await this.prisma.rolePermission.findMany();
+    const m = new Map<string, boolean>();
+    for (const r of rows) m.set(`${r.role}:${r.permissionKey}`, r.allowed);
+    this.cache = m;
+  }
+
+  /** Is the role allowed the permission? Consults the DB matrix (cached), falling
+   * back to the §6 default when the cell is missing. */
+  async isAllowed(role: Role, permissionKey: string): Promise<boolean> {
+    if (!this.cache) await this.loadCache();
+    const key = `${role}:${permissionKey}`;
+    if (this.cache!.has(key)) return this.cache!.get(key)!;
+    const def = PERMISSIONS.find((p) => p.key === permissionKey);
+    return def ? def.defaults.includes(role) : false;
+  }
 
   /** Lazily seed the §6 default matrix on first access. */
   private async ensureSeed(): Promise<void> {
@@ -52,6 +73,8 @@ export class RbacService {
       update: { allowed },
       create: { role, permissionKey, allowed },
     });
+    this.cache = null; // invalidate so enforcement picks up the change
+
     await this.audit.log({
       entityType: 'RolePermission',
       entityId: `${role}:${permissionKey}`,

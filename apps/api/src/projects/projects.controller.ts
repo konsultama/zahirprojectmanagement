@@ -17,7 +17,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ListProjectsDto } from './dto/list-projects.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
-import { Roles } from '../common/auth/roles.decorator';
+import { Permission } from '../common/auth/permission.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { RequestUser } from '../common/auth/current-user.middleware';
 
@@ -33,7 +33,7 @@ export class ProjectsController {
   constructor(private readonly projects: ProjectsService) {}
 
   @Post()
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('master_project.write')
   create(@Body() dto: CreateProjectDto, @CurrentUser() user: RequestUser, @Req() req: Request) {
     return this.projects.create(dto, requireUser(user), ip(req) ?? undefined);
   }
@@ -49,7 +49,7 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('master_project.write')
   update(
     @Param('id') id: string,
     @Body() dto: UpdateProjectDto,
@@ -71,7 +71,7 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN)
+  @Permission('master_project.delete')
   remove(
     @Param('id') id: string,
     @CurrentUser() user: RequestUser,

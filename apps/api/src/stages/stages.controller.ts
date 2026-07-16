@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { Role } from '@prisma/client';
 import { StagesService } from './stages.service';
 import { InitiatingService } from './initiating.service';
-import { Roles } from '../common/auth/roles.decorator';
+import { Permission } from '../common/auth/permission.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { RequestUser } from '../common/auth/current-user.middleware';
 import { ChecklistUpdateDto, RejectDto, SaveInitiatingDto } from './dto/initiating.dto';
@@ -34,7 +34,7 @@ export class StagesController {
   }
 
   @Put('initiating')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('initiating.fill')
   saveInitiating(
     @Param('projectId') projectId: string,
     @Body() dto: SaveInitiatingDto,
@@ -45,7 +45,7 @@ export class StagesController {
   }
 
   @Patch('initiating/checklist/:itemId')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('initiating.fill')
   updateChecklist(
     @Param('projectId') projectId: string,
     @Param('itemId') itemId: string,
@@ -57,7 +57,7 @@ export class StagesController {
   }
 
   @Post('initiating/submit')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('initiating.fill')
   submitInitiating(
     @Param('projectId') projectId: string,
     @CurrentUser() user: RequestUser,
@@ -67,7 +67,7 @@ export class StagesController {
   }
 
   @Post('initiating/approve')
-  @Roles(Role.ADMIN)
+  @Permission('initiating.approve')
   approveInitiating(
     @Param('projectId') projectId: string,
     @CurrentUser() user: RequestUser,
@@ -77,7 +77,7 @@ export class StagesController {
   }
 
   @Post('initiating/reject')
-  @Roles(Role.ADMIN)
+  @Permission('initiating.approve')
   rejectInitiating(
     @Param('projectId') projectId: string,
     @Body() dto: RejectDto,

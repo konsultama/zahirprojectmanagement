@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { Role } from '@prisma/client';
 import { ExecutingService } from './executing.service';
 import { CostActualDto, UpdateExecutionDto } from './dto/executing.dto';
-import { Roles } from '../common/auth/roles.decorator';
+import { Permission } from '../common/auth/permission.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { RequestUser } from '../common/auth/current-user.middleware';
 
@@ -23,7 +23,7 @@ export class ExecutingController {
   }
 
   @Patch(':wbsItemId')
-  @Roles(Role.ADMIN, Role.PM, Role.SUPERVISOR)
+  @Permission('executing.update')
   update(
     @Param('projectId') projectId: string,
     @Param('wbsItemId') wbsItemId: string,
@@ -35,7 +35,7 @@ export class ExecutingController {
   }
 
   @Post(':wbsItemId/cost')
-  @Roles(Role.ADMIN, Role.PM, Role.SUPERVISOR)
+  @Permission('executing.update')
   addCost(
     @Param('projectId') projectId: string,
     @Param('wbsItemId') wbsItemId: string,
@@ -47,7 +47,7 @@ export class ExecutingController {
   }
 
   @Delete('cost/:costId')
-  @Roles(Role.ADMIN, Role.PM, Role.SUPERVISOR)
+  @Permission('executing.update')
   deleteCost(
     @Param('projectId') projectId: string,
     @Param('costId') costId: string,

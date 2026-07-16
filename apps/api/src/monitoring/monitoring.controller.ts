@@ -5,6 +5,7 @@ import { MonitoringService } from './monitoring.service';
 import { RiskService } from './risk.service';
 import { CreateRiskDto, UpdateQcDto, UpdateRiskDto } from './dto/monitoring.dto';
 import { Roles } from '../common/auth/roles.decorator';
+import { Permission } from '../common/auth/permission.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { RequestUser } from '../common/auth/current-user.middleware';
 
@@ -27,7 +28,7 @@ export class MonitoringController {
   }
 
   @Patch('qc/:wbsItemId')
-  @Roles(Role.ADMIN, Role.QC)
+  @Permission('qc.fill')
   updateQc(
     @Param('projectId') projectId: string,
     @Param('wbsItemId') wbsItemId: string,

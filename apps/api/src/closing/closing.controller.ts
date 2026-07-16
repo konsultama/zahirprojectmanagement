@@ -4,7 +4,7 @@ import { Role } from '@prisma/client';
 import { ClosingService } from './closing.service';
 import { CreateDocumentDto, EvaluationDto, MasterUpdateDto, UpdateDocumentDto } from './dto/closing.dto';
 import { RejectDto } from '../stages/dto/initiating.dto';
-import { Roles } from '../common/auth/roles.decorator';
+import { Permission } from '../common/auth/permission.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { RequestUser } from '../common/auth/current-user.middleware';
 
@@ -29,49 +29,49 @@ export class ClosingController {
   }
 
   @Patch('documents/:id')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('closing.fill')
   updateDoc(@Param('projectId') projectId: string, @Param('id') id: string, @Body() dto: UpdateDocumentDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.updateDocument(projectId, id, dto, must(u), ip(req));
   }
 
   @Post('documents')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('closing.fill')
   addDoc(@Param('projectId') projectId: string, @Body() dto: CreateDocumentDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.addDocument(projectId, dto, must(u), ip(req));
   }
 
   @Delete('documents/:id')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('closing.fill')
   removeDoc(@Param('projectId') projectId: string, @Param('id') id: string, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.removeDocument(projectId, id, must(u), ip(req));
   }
 
   @Put('evaluation')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('closing.fill')
   saveEval(@Param('projectId') projectId: string, @Body() dto: EvaluationDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.saveEvaluation(projectId, dto, must(u), ip(req));
   }
 
   @Post('master-update')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('closing.fill')
   masterUpdate(@Param('projectId') projectId: string, @Body() dto: MasterUpdateDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.applyMasterUpdate(projectId, dto, must(u), ip(req));
   }
 
   @Post('submit')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('closing.fill')
   submit(@Param('projectId') projectId: string, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.submit(projectId, must(u), ip(req));
   }
 
   @Post('approve')
-  @Roles(Role.ADMIN)
+  @Permission('closing.approve')
   approve(@Param('projectId') projectId: string, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.approve(projectId, must(u), ip(req));
   }
 
   @Post('reject')
-  @Roles(Role.ADMIN)
+  @Permission('closing.approve')
   reject(@Param('projectId') projectId: string, @Body() dto: RejectDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.closing.reject(projectId, dto.reason, must(u), ip(req));
   }

@@ -76,7 +76,8 @@ export function RbacMatrix() {
       )}
       <p className="muted small">
         Matriks ini mengikuti PRD §6 dan tersimpan di basis data (dapat dikonfigurasi Admin, tercatat di audit
-        trail). Penegakan hak akses pada endpoint saat ini masih memakai aturan bawaan yang sama.
+        trail). Perubahan langsung <strong>ditegakkan</strong> pada endpoint terkait — mencabut/menambah centang
+        segera mengubah hak akses peran tersebut.
       </p>
     </div>
   );

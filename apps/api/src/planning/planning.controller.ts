@@ -5,7 +5,7 @@ import { WbsService } from './wbs.service';
 import { PlanningService } from './planning.service';
 import { CreateWbsDto, OverbudgetDto, UpdateWbsDto } from './dto/wbs.dto';
 import { RejectDto } from '../stages/dto/initiating.dto';
-import { Roles } from '../common/auth/roles.decorator';
+import { Permission } from '../common/auth/permission.decorator';
 import { CurrentUser } from '../common/auth/current-user.decorator';
 import { RequestUser } from '../common/auth/current-user.middleware';
 
@@ -33,43 +33,43 @@ export class PlanningController {
   }
 
   @Post('wbs')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('planning.compose')
   createRow(@Param('projectId') projectId: string, @Body() dto: CreateWbsDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.wbs.create(projectId, dto, must(u), ip(req));
   }
 
   @Patch('wbs/:id')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('planning.compose')
   updateRow(@Param('projectId') projectId: string, @Param('id') id: string, @Body() dto: UpdateWbsDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.wbs.update(projectId, id, dto, must(u), ip(req));
   }
 
   @Delete('wbs/:id')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('planning.compose')
   deleteRow(@Param('projectId') projectId: string, @Param('id') id: string, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.wbs.remove(projectId, id, must(u), ip(req));
   }
 
   @Post('overbudget')
-  @Roles(Role.ADMIN, Role.FINANCE)
+  @Permission('overbudget.approve')
   setOverbudget(@Param('projectId') projectId: string, @Body() dto: OverbudgetDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.planning.setOverbudget(projectId, dto, must(u), ip(req));
   }
 
   @Post('submit')
-  @Roles(Role.ADMIN, Role.PM)
+  @Permission('planning.compose')
   submit(@Param('projectId') projectId: string, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.planning.submit(projectId, must(u), ip(req));
   }
 
   @Post('approve')
-  @Roles(Role.ADMIN, Role.FINANCE)
+  @Permission('planning.approve')
   approve(@Param('projectId') projectId: string, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.planning.approve(projectId, must(u), ip(req));
   }
 
   @Post('reject')
-  @Roles(Role.ADMIN, Role.FINANCE)
+  @Permission('planning.approve')
   reject(@Param('projectId') projectId: string, @Body() dto: RejectDto, @CurrentUser() u: RequestUser, @Req() req: Request) {
     return this.planning.reject(projectId, dto.reason, must(u), ip(req));
   }
